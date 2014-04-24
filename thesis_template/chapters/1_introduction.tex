@@ -4,4 +4,23 @@ Describe the problem and the motivation for this research.
 
 \section{Related Work}\label{sec:related_work}
 
-Describe the current state of the art. Provide all neccessary citations.
+One approach to solve the relocalization problem proposed by Williams \cite{Williams2007}. In their implementation they use Random Forest classifiers to characterize a salient object in space. To do so the classifier needs to be trained with as many as possible representations of the object (multiple views). The first time an object is found multiple warps of the of the patch are used to initialize its presence in the classifier. On later encounters with the object the classifier is incrementally trained with the new data. During the relocalization face salient points are classified and the 3pt algorithm is used to recover the 6 DoF position.\\
+
+This method is very tied to the SLAM implementation, in this case using random forest, so it can not be applied on other problems. Also is is memory expensive and requires of GPU power to generates the patch warps.\\
+
+Shotton in \cite{Shotton2013} also propose a method using random forests. RGB-D data is used to train the classifier. In this case all the information will be encoded in the classifier so no structure or previous computing (salient point detection, descriptor extraction, etc...) is needed. The classifier is trained to given an RGB-D pixel will output a provability distribution over the three $XYZ$. This can be applied to all pixels of a frame or to a random sparse selection of them. Ideally the camera pose can be inferred from only three pixels, but as the output of the classifier can be very noisy a second step is applied. From the output from many pixels an energy function is minimized using preemptive RANSAC.\\
+
+To train this method a very complete dataset of RGB-D images with 6 DoF poses associated to them from the environment is needed. That makes it difficult to be used with SLAM problems where the map get populated simultaneously. An online training  method should be developed.\\
+
+Klein presents in \cite{Klein2008improving} the relocalization method used in PTAM \cite{KleinMurray2007}. PTAM is a VO algorithm based on KeyFrames, and so those are used during the relocalization step. The relocalization method consists of two steps. First, given the current frame, the most similar KeyFrame is retrieved, and its know pose is used as a base line. As a measure of similarity the difference between subsampled, blurred and 0mean images is used. This measure is mostly the same as the cross correlation. The small blurry images are storied every time there is a new KeyFrame and the small blurry image of a new frame is computed during the relocalization to be compared with the KeyFrames.\\
+
+During the second step the transformation from the retrieved frame is calculated. This transformation will be finally appended to the know KeyFrame pose. To do so an image alignment using the Efficient Second-Order Minimization method (ESM). ESM is a Gauss-Newton gradient descent algorithm which can be used with different image warp functions similar to the Lucas-Kanade \cite{Baker2004}.\\
+
+Other methods can be used for image retrival, for example using bag of words. Niest\'er \cite{Nister2006} proposes to use a vocavilary tree of SIFT descriptors where every node has $k$ childes which are clusters from $k$-means. This way a large amount of descriptors is still tractable thanks to the fast retrieval provided by the tree.
+
+PTAM from Klein and Murray \cite{KleinMurray2007} has become a reference as a Visual Odometry (VO) algorithm. In \cite{Klein2008improving} they propose their relocalization method which is composed by two steps. First the most similar KeyFrame is retrieved from the map using the cross correlation similarity measure of a downsapled, blurred, zero mean version of the images. Second the transformation with the retrieved KeyFrame is computed in $SE(2)$ a to correct the possible displacement. This is achieved by means of the Efficient Second-order Minimization optimization method (ESM) ????Reference?????.
+
+Other methods can be used to find the transformation between two images in the $3D$. The five points algorithm \cite{nister2004efficient} where 5 pixel correspondences are used to infer the $SE(3)$ transformation between two images. This method is similar to the Lucas-Kanade \cite{Baker2004} which is a Gauss-Newton algorithm 
+
+
+
