@@ -1,26 +1,55 @@
 \chapter{Introduction}\label{sec:introduction}
 
-Describe the problem and the motivation for this research.
+Real-time monocular Visual Odometry (VO) algorithms can be used to estimate the 6 DoF pose of a camera relative to its surroundings. This is attractive for applications such as mobile robotics (mostly aerial vehicles where not much power is available) and Augmented Reality (AR) because cameras are small and self-contained and therefore easy to attach to autonomous robots or AR displays. Further, they are cheap, and are now often pre-integrated into mobile computing devices such as PDAs, phones and laptops.\\
+
+SVO (Semi-direct Bisual Odometry) \cite{Forster2014} is a very fast VO algorithm able to run at more than 300 frames per second on a consumer laptop. It builds a map based on keyframes and salient points. Most monocular VO are feature-based where scale and rotation invariant descriptors (SIFT, SURF\ldots) are extracted and matched in order to recover the motion from frame to frame while finally refining the pose with reprojection error minimization with the map. SVO uses a different approach by using direct methods. Instead of matching descriptors, it uses intensity gradient to minimize the error between patches around detected salient points over the frame to frame transformation. Finally, it uses Bundle Adjustment to align with the map and avoid or minimize derive.\\
+
+The main problem with most existing monocular VO implementations (including SVO) is a lack of robustness. Rapid camera motions, occlusion, and motion blur (phenomena which are common in all but the most constrained experimental settings) can often cause tracking to fail. While this is inconvenient with any tracking system, tracking failure is particularly problematic for VO systems: not only is camera pose lost, but the estimated map could become corrupted as well. \\
+
+This problem is accentuated during a fast  agile maneuver (e.g., a flip) and so a good relocalization is important when these are intended to be performed. The envisaged relocalization scheme proceeds as follows:
+
+\begin{itemize}
+  \item Ina training stage, the vehicle explores the environment where the relocalization is supposed to occur. During this stage, an appropriate representation of the scene is created. 
+  \item The vehicle executes an agile maneuver during which vision-based tracking is no feasible.
+  \item During the actual relocalization phase, the 6 DoF pose in  the built map must be estimated.
+\end{itemize}
 
 \section{Related Work}\label{sec:related_work}
 
-One approach to solve the relocalization problem proposed by Williams \cite{Williams2007}. In their implementation they use Random Forest classifiers to characterize a salient object in space. To do so the classifier needs to be trained with as many as possible representations of the object (multiple views). The first time an object is found multiple warps of the of the patch are used to initialize its presence in the classifier. On later encounters with the object the classifier is incrementally trained with the new data. During the relocalization face salient points are classified and the 3pt algorithm is used to recover the 6 DoF position.\\
+\subsubsection{Place Recognition}
+\label{ssub:place_recognition}
 
-This method is very tied to the SLAM implementation, in this case using random forest, so it can not be applied on other problems. Also is is memory expensive and requires of GPU power to generates the patch warps.\\
 
-Shotton in \cite{Shotton2013} also propose a method using random forests. RGB-D data is used to train the classifier. In this case all the information will be encoded in the classifier so no structure or previous computing (salient point detection, descriptor extraction, etc...) is needed. The classifier is trained to given an RGB-D pixel will output a provability distribution over the three $XYZ$. This can be applied to all pixels of a frame or to a random sparse selection of them. Ideally the camera pose can be inferred from only three pixels, but as the output of the classifier can be very noisy a second step is applied. From the output from many pixels an energy function is minimized using preemptive RANSAC.\\
+Klein and Murray presents in \cite{Klein2008improving} the relocalization method used in PTAM \cite{KleinMurray2007}. PTAM is a VO algorithm based on keyframes that are used during the relocalization. The relocalization method consists of two steps. First, given the current frame, the most similar keyframe is retrieved, and its know pose is used as a baseline. As measure of similarity the difference between subsampled, blurred and zero-mean images is used. This measure is a cross correlation. The small blurry images are storied every time there is a new keyframe and the small blurry image of a new frame is computed during the relocalization to be compared with the keyframes.\\
 
-To train this method a very complete dataset of RGB-D images with 6 DoF poses associated to them from the environment is needed. That makes it difficult to be used with SLAM problems where the map get populated simultaneously. An online training  method should be developed.\\
+Other methods can be used for image retrieval, for example using bag of words. Nist\'er and Stewenius \cite{Nister2006} proposes to use a tree structure to store words in order to handle much larger vocabulary or have a much faster retrieval. Every node of the tree would have $k$ child nodes which are the clustering results of $k$-means. The tree would be build by recursive $k$-means.\\
 
-Klein presents in \cite{Klein2008improving} the relocalization method used in PTAM \cite{KleinMurray2007}. PTAM is a VO algorithm based on KeyFrames, and so those are used during the relocalization step. The relocalization method consists of two steps. First, given the current frame, the most similar KeyFrame is retrieved, and its know pose is used as a base line. As a measure of similarity the difference between subsampled, blurred and 0mean images is used. This measure is mostly the same as the cross correlation. The small blurry images are storied every time there is a new KeyFrame and the small blurry image of a new frame is computed during the relocalization to be compared with the KeyFrames.\\
+This structure is expensive to build because $k$-means is very resource consuming. During the online process, new words can be appended to the final leaves.\\
 
-During the second step the transformation from the retrieved frame is calculated. This transformation will be finally appended to the know KeyFrame pose. To do so an image alignment using the Efficient Second-Order Minimization method (ESM). ESM is a Gauss-Newton gradient descent algorithm which can be used with different image warp functions similar to the Lucas-Kanade \cite{Baker2004}.\\
+\"Ozuysal et al. \cite{Ozuysal2010} proposes a simplified random forest classifier which relates image patches to objects. It is simplified because instead of using a tree structure they use a linear structure applying all the binary tests to the patch. The result of the tests is a binary descriptor, the list of binary tests is called Fern. Every object is trained with multiple random warps of the known view to introduce information from possible different views of the object. In the end every object can be represented with many binary descriptors and every descriptor should output a probability distribution of possible objects represented. Evaluating multiple Ferns and joining the yelled distributions the final classification is achieved.\\
 
-Other methods can be used for image retrival, for example using bag of words. Niest\'er \cite{Nister2006} proposes to use a vocavilary tree of SIFT descriptors where every node has $k$ childes which are clusters from $k$-means. This way a large amount of descriptors is still tractable thanks to the fast retrieval provided by the tree.
+\subsubsection{Pose Estimation}
+\label{ssub:pose_estimation}
 
-PTAM from Klein and Murray \cite{KleinMurray2007} has become a reference as a Visual Odometry (VO) algorithm. In \cite{Klein2008improving} they propose their relocalization method which is composed by two steps. First the most similar KeyFrame is retrieved from the map using the cross correlation similarity measure of a downsapled, blurred, zero mean version of the images. Second the transformation with the retrieved KeyFrame is computed in $SE(2)$ a to correct the possible displacement. This is achieved by means of the Efficient Second-order Minimization optimization method (ESM) ????Reference?????.
 
-Other methods can be used to find the transformation between two images in the $3D$. The five points algorithm \cite{nister2004efficient} where 5 pixel correspondences are used to infer the $SE(3)$ transformation between two images. This method is similar to the Lucas-Kanade \cite{Baker2004} which is a Gauss-Newton algorithm 
+During the second step of the relocalization of PTAM, the transformation from the retrieved frame is calculated. This transformation will be finally appended to the know keyframe pose. To do so, an image alignment algorithm, Efficient Second-Order Minimization method (ESM) \cite{Benhimane2006}, is employed. ESM is a Gauss-Newton gradient descent algorithm which can be used with different image warp functions, it is a Lucas-Kanade \cite{Baker2004} algorithm that uses Second-order functions; therefore, results in a faster convergence.\\
+
+Geometric methods are typically used to find the transformation from the fond keyframe using the classic pipeline of salient points detection, feature extraction and matching. The 5pt algorithm can then be used to find the 6 DoF transformation or the 3pt algorithm if depth is known.
+
+
+\subsubsection{Joint Place and Pose estimation}
+\label{ssub:joint_place_and_pose_estimaton}
+
+One approach to solve the relocalization problem was proposed by Williams \cite{Williams2007}. In their implementation, they use Random Forest classifiers to characterize a salient object in space. To do so, the classifier needs to be trained with as many as possible representations of the object (multiple views). Therefore, the first time an object is found, multiple warps of the of the patch are used to initialize its presence in the classifier. On later encounters with the object, the classifier is incrementally trained with additional data. During the relocalization phase salient points are classified using the trained classifier and the 3pt algorithm is used to recover the 6 DoF position. This method is is memory expensive and requires of GPU power to generates the patch warps.\\
+
+Shotton et al. \cite{Shotton2013} also propose a method using random forests. RGB-D data is used to train the classifier. In this case, all the information is encoded in the classifier so no previous data storing or computing (salient point detection, descriptor extraction, etc...) is needed. The classifier is trained to an individual RGB-D pixel, and an RGB-D pixel query will output a probability distribution over the position in $\mathbb{R}^3$. This can be applied to all pixels of a frame or to a sparse subset selection of them. Ideally, the camera pose can be inferred from only three pixels, but as the output of the classifier can be very noisy, a second step is applied. From the output from many pixels an energy function is minimized using preemptive RANSAC in order to find a pose that agrees with most of the distributions.\\
+
+To train this method a very complete dataset of RGB-D images with 6 DoF poses from the environment associated to them is needed. That makes it difficult to be used with SLAM problems where the map get populated incrementally. An online training  method should be developed.\\
+
+
+
+
+
 
 
 
