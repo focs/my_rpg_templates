@@ -16,8 +16,8 @@ The used similarity score is the Cross Correlation between images meaning the su
 
 During the normal map building pipeline this image is computed and stored every time a new keyframe is added to the map. And then, during the relocalization, the sum of squared difference between every stored \textit{small-blurry-image} and the last acquired frame is computed to find the most similar keyframe and then use its pose as an initial estimation of the current camera pose.\\
 
-\subsubsection{Method evaluation}
-\label{ssub:method_evaluation}
+\subsubsection{Method validation}
+\label{ssub:cc_method_validation}
 
 To evaluate the method the real distance between two frames is going to be compared with the Cross Correlation value described above. Far away frames should be dissimilar and close by frames should be more similar and have a lower CC value. In figure \ref{fig:real_distance_confusion_matrix} can be seen the pair distances between image using the real pose while in figure \ref{fig:CC_confusion_matrix} there is the approximated pair distances using the CC value as distance. It can be seen that they have a similar distribution. Also the correlation of 0.4337 shows that one explains the other in most cases.\\
 
@@ -42,14 +42,171 @@ Finally, to show that this method can be used, for every image the most CC simil
 \begin{figure}[!htbp]
   \centering
   \includegraphics[width=9cm]{img/demo_1_1_CC_choose_distribution.eps}
-  \caption{}
+  \caption{Distribution of closest chosen images using CC}
   \label{fig:K_closest}
 \end{figure}
 
 
+\begin{figure}[!htpb]
+  \centering
+  \begin{subfigure}[b]{0.6\linewidth}
+    \includegraphics[width=\linewidth]{img/query_1.png}
+    \caption{Query image}
+    \label{fig:query_1}
+  \end{subfigure}
+  \quad
+  \begin{subfigure}[b]{0.6\linewidth}
+    \includegraphics[width=\linewidth]{img/best_match_1.png}
+    \caption{Found closest image}
+    \label{fig:best_match_1}
+  \end{subfigure}
+  \caption{}
+  \label{fig:cc_example}
+\end{figure}
 
-\subsubsection{Real Pose Finder}
-\label{ssub:real_pose_finder}
+
+In figure \ref{fig:cc_example} of what would the algorithm return for a given query image for which there is no pose information available. Figure \ref{fig:query_1} is the image seen by the camera at the moment of the relocalization and \ref{fig:best_match_1} is what the system found to be the most similar, closest, image using the CC procedure explained previously. In this case the to image's camera pose are not the same, but they should be similar enough in order to find the difference in posterior steps.\\
+
+\subsection{Real Pose Finder}
+\label{sub:real_pose_finder}
+
+The second step of the relocalization algorithm from PTAM tries to refine the pose of the found to be most similar keyframe to explain the current pose of the camera. During this step, in the implementation from PTAM, only rotations are corrected. An image alignment through optimization algorithm (ESM)~\ref{sec:lucas_kanard} is used to find the $SE(2)$ transformation between the two.\\
+
+This transformation is not easily interpreted in $SE(3)$, a translation in pixels can mean different things in the world frame depending on the distance to the object. Also, in $SE(3)$ there are three angular DoF, not one. The found transformation can be interpreted in multiple ways in the world frame. In the PTAM implementation it is assumed that the translation will only involve rotations, and so, the next step is the mapping from $SE(2)$ to $SO(3)$.\\
+
+A Gauss-Newton minimization algorithm is used to find the $SO(3)$ model that modifies the image in the same way as the found $SE(2)$ model. The minimization is over the $SO(3)$ parameters $\xi$ and the error is expressed as in~\ref{equ:so3_error}
+
+\begin{equation}
+  \delta_i(\xi) = T_{SE(2)}u_i - \pi(T_{SO(3)}(\xi) p_i) \qquad \text{where} \quad u_i = \pi(p_i)
+  \label{equ:so3_error}
+\end{equation}
+
+
+where $u_i$ is a pixel position (during the implementation $u_0=(5,0)$ and $u_1=(-5,0)$ are used). Also the Jacobian of $\delta$ is needed during the minimization process.
+
+\begin{equation}
+  \frac{\partial \delta(\xi)}{\partial \xi} = -\frac{\partial \pi (b)}{\partial b}|_{b=p} \frac{\partial T_{SO(3)}(\xi)}{\partial\xi}|_{\xi=0} \quad p
+\end{equation}
+
+with
+
+\begin{equation}
+  \frac{\partial \pi(b)}{\partial b} |_{b=p} = \frac{f}{z}
+  \begin{bmatrix}
+    1 & 0 & -\frac{x}{z} \\
+    0 & 1 & -\frac{y}{z}
+  \end{bmatrix}
+  \qquad \text{where} \quad 
+  p = \begin{bmatrix} x \\ y \\ z \end{bmatrix} \quad \text{and} \quad f = \text{focal length}
+\end{equation}
+
+\begin{equation}
+  \frac{\partial T_{SO(3)}(\xi)}{\partial \xi_k}  = G_k \qquad \text{where} \quad G = \text{$SO(3)$ Generator}
+\end{equation}
+
+
+\subsubsection{Method validation}
+\label{ssub:esm_method_validation}
+
+To visualize the results of the different optimization procedures described above, the found transformation has been applied to the image. In the first step, the $SE(2)$ transformation between two image is computed and the transformed image on every step is one of the used variables. In figure~\ref{fig:se2_transformation_1} can be seen the final transformation found from~\ref{fig:best_match_1} to~\ref{fig:query_1}. In figure~\ref{fig:se3_error_1} the error can be visualized, there it can be seen that translation and rotation are well corrected but there still is a misalignment caused mostly by a change on scale which is not taken into account during the alignment.\\
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.6\linewidth]{img/se2_transformation_1.png}
+  \caption{$SE(2)$ transformed image}
+  \label{fig:se2_transformation_1}
+\end{figure}
+
+On the other side, during the second minimization where there $SO(3)$ translation is found, no image is actually involved, only two pixel coordinates. To generate a visualization of the translation the calibration of the camera is needed. Every pixel is unprotected form the image into the image plane, then the transformation is applied to it and finally it is projected back to the image. The result of the described procedure can be seen in figure~\ref{fig:so3_transformation_1}.\\
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.6\linewidth]{img/so3_transformation_1.png}
+  \caption{$SO(3)$ transformed image}
+  \label{fig:so3_transformation_1}
+\end{figure}
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.6\linewidth]{img/se2_error_1.png}
+  \caption{$SE(2)$ transformation error visualization}
+  \label{fig:se3_error_1}
+\end{figure}
+
+
+\subsection{Real Pose Finder Alternative}
+\label{sub:real_pose_finder_alternative}
+
+During the mapping of an area the VO algorithm finds landmarks in the world frame which are associated with detected featured points in keyframes (i.e. every featured point in an image is related to a $3D$ position in the world frame). Given a new image, some extracted featured points can be related to a keyframe using the description-matching fashion which at the same time are related to world positions. From this information the full 6 DoF translation $SE(3)$ can be computed using the three point algorithm.\\
+
+The 3pt algorithm and its implementation is described in \cite{kneipopengv}. In this case the described \textit{Central absolute pose} is dealt with.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.6\linewidth]{img/absolute_central.png}
+  \caption{From camera frame bearings (or image pixels if the camera calibration is available) and fix frame points the transformation between the two frames can be computed using the 3pt algorithm. Image from \cite{kneipopengv}}
+  \label{fig:img/absolute_centra}
+\end{figure}
+
+First, descriptors from every featured point are extracted, both SIFT and SURF can be used updating a configuration file. Second, a brute force KNN matching is performed from all the extracted descriptors from on image and all the descriptors of the second image. The first, and second most similar descriptor are retrieved. Then, only good matches are kept, that is, using the matching technique described by Lowe, only matches with a descriptor ratio between the first and the second closest match of 0.8 or less are kept, only discriminant matches are used.\\
+
+Finally, the 3pt algorithm is fed with the pixel positions from the query image and the landmarks from the other. Because there are still outliers after the described simple filtering, this process is run in RANSAC framework. \\
+
+
+\subsubsection{Method validation}
+\label{ssub:3pt_method_validation}
+
+Figures~\ref{fig:3pt_matches} and~\ref{fig:3pt_inliers} are an example of the described above. The pose outputted was used to correctly relocalize and so it was correct.\\
+
+The first part, where descriptors are extracted, matches and filtered, can be seen in figure~\ref{fig:3pt_matches}.  It can be seen that most matches are correct after this first filtering.\\
+
+The inliers found during the RANSAC process can be seen in~\ref{fig:3pt_inliers}, it has to be kept in mind that the found transformation is not from image to image but from world, using world points, to frame. These world points can not be visualized and its precision could lead to not being included to the inliers group.\\
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=1.0\linewidth]{img/3pt_matches_1.png}
+  \caption{Accepted matches using SIFT}
+  \label{fig:3pt_matches}
+\end{figure}
+
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=1.0\linewidth]{img/3pt_inliers_1.png}
+  \caption{Inliers from RANSAC used to calculate the pose with the three-point algorithm }
+  \label{fig:3pt_inliers}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \chapter{To be removed}
 \label{cha:chapter_name}
