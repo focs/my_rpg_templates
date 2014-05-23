@@ -130,6 +130,7 @@ where $\nabla I$ is the gradient of the input image and $\frac{\partial W}{\part
     -xsin(\alpha) - ycos(\alpha) & 1 & 0 \\
     xcos(\alpha) - ysin(\alpha) & 0 & 1 \\
   \end{bmatrix}
+  \label{eq:se2_jac}
 \end{equation}
 
 
@@ -158,6 +159,35 @@ The ESM algorithm used in PTAM is very similar to the derived above with the dif
 \begin{equation}
   \nabla I = \frac{1}{2} \left[\nabla I_t + \nabla I_q \right]
 \end{equation}
+
+\begin{equation}
+  \textit{steepest descent}\text{ image} = \nabla I \frac{\partial W}{\partial p}
+  \label{eq:steepest_image}
+\end{equation}
+
+What in~\cite{Baker2004} is referred as \textit{steepest descent} image~\ref{eq:steepest_image} in PTAM and other references is the Jacobian. That is, the gradient of the image multiplied by the Jacobian of the warp function. Taking the used Jacobian \ref{eq:se2_jac} the \textit{steepest descent} image would be
+
+\begin{equation}
+\begin{array}
+\textit{steepest descent}\text{ pixel} = \begin{bmatrix}  g_x & g_y \end{bmatrix} 
+  \begin{bmatrix}
+    -xsin(\alpha) - ycos(\alpha) & 1 & 0 \\
+    xcos(\alpha) - ysin(\alpha) & 0 & 1 \\
+  \end{bmatrix}
+  \\ \\=
+  \begin{bmatrix}
+    g_x(-xsin(\alpha) - ycos(\alpha)) + g_y(xcos(\alpha) - ysin(\alpha)) & g_x & g_y
+  \end{bmatrix}
+  \\ \\
+  \approx
+
+  \begin{bmatrix}
+    -g_x y + g_y x & g_x & g_y
+  \end{bmatrix}
+\end{array}
+\end{equation}
+
+During the implementation, $\alpha$ is considered to be close to zero.
 
 
 
