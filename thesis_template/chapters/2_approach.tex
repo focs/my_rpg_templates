@@ -75,6 +75,92 @@ The second step of the relocalization algorithm from PTAM tries to refine the po
 \subsubsection{Image alignment}
 \label{ssub:image_alignment}
 
+The Extended Second order Minimization algorithm (ESM) is based on the algorithm proposed by Lucas and Kanade \cite{Baker2004} in 1981. The goal of both algorithms is to align one template image $T$ to a different input image $I$ through a parametrised warping function. \\
+
+With this goal an error function is defined on which the Gauss-Newton or Levenberg-Marquardt schemes can be applied. The error is the squared difference between the template image and the warped input image
+
+\begin{equation}
+  \sum_x [I(W(x;p)) - T(x)]^2
+\end{equation}
+
+The warping function is going to be in $SE(2)$, that is, translation and rotation of the image.
+
+\begin{equation}
+  W(x;p) = 
+  \begin{bmatrix}
+    cos (\alpha) & sin(\alpha) & t_x\\
+    -sin(\alpha) & cos(\alpha) & t_y\\
+    0 & 0 & 1 \\
+  \end{bmatrix}
+  \begin{bmatrix} x \\ y \\ 1 \end{bmatrix}
+    =
+  \begin{bmatrix}
+    xcos(\alpha) + y sin(\alpha) + t_x \\
+    -x sin(\alpha) + y cos(\alpha) + t_y \\
+  \end{bmatrix}
+  \label{eq:se2_warp_function}
+\end{equation}
+
+where $p = \begin{pmatrix} \alpha , t_x , t_y \end{pmatrix}$ are the $SE(2)$ parameters and $x = \begin{pmatrix} x , y \end{pmatrix}$ is a pixel coordinate.\\
+
+  The algorithm assumes that a current estimate of $p$ exists and iteratively tries improves it by increments $\Delta p$. On every  iteration equation~\ref{eq:delta_error} is solved on $\Delta p$ and then it is used to update $p$ as in~\ref{eq:p_update}
+
+\begin{equation}
+  \sum_x [I(W(x;p + \Delta p)) - T(x)]^2
+  \label{eq:delta_error}
+\end{equation}
+
+\begin{equation}
+  p \leftarrow p + \Delta p
+  \label{eq:p_update}
+\end{equation}
+
+To solve question~\ref{eq:delta_error}  it first needs to be linearised. With this goal, a first Taylor expansion on $I(W(x:p + \Delta p))$ is carried on leading to
+
+\begin{equation}
+\sum_x [I(W(x;p)) + \nabla I \frac{\parial W}{\partial p} \Delta p - T(x)]^2
+\end{equation}
+
+where $\nabla I$ is the gradient of the input image and $\frac{\partial W}{\partial p}$ is the Jacobian of the warping function. In this case the Jacobian of~\ref{eq:se2_warp_function} is
+
+\begin{equation}
+  \frac{\partial W}{\partial p}
+  =
+  \begin{bmatrix}
+    -xsin(\alpha) - ycos(\alpha) & 1 & 0 \\
+    xcos(\alpha) - ysin(\alpha) & 0 & 1 \\
+  \end{bmatrix}
+\end{equation}
+
+
+The solution that minimizes~\ref{eq:delta_error}  on $\Delta p$ can be found in a least squares sense. The equation needs to be derived and then set it equal to zero. The partial derivative of~\ref{eq:delta_error} with respect to $\Delta p$ is:
+
+\begin{equation}
+  2 \sum_x \left[\nabla I \frac{\partial W}{\partial p}\right]^T \left[I(W(x;p)) + \nabla I \frac{\partial W}{\partial p} \Delta p - T(x) \right]
+  \label{eq:derivated}
+\end{equation}
+
+Then, setting~\ref{eq:derivated} equal to zero to find where it is minimized (or maximized) by $Delta p$ and isolating $\Delta p$ the next closed form solution can be found:
+
+\begin{equation}
+  \Delta p = H^{-1} \sum_x \left[\nabla I \frac{\partial W}{\partial p}\right]^T \left[ T(x) - I(W(x;p)) \right]
+\end{equation}
+
+Where $H$ is the Gauss-Newton approximation of the Hessian matrix:
+
+\begin{equation}
+  H = \sum_x \left[\nabla I \frac{\partial W}{\partial p}\right]^T \left[\nabla I \frac{\partial W}{\partial p}\right]
+\end{equation}
+
+
+The ESM algorithm used in PTAM is very similar to the derived above with the difference that where the Lucas-Kanade takes the gradient from the input image, ESM used both the gradient of the input image and the gradient of the template image and averages them.
+
+\begin{equation}
+  \nabla I = \frac{1}{2} \left[\nabla I_t + \nabla I_q \right]
+\end{equation}
+
+
+
 
 
 
