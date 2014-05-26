@@ -1,18 +1,28 @@
 \chapter{Introduction}\label{sec:introduction}
+Micro Aerial Vehicles (MAVs) are about to play a major role in tasks like search and rescue, environment monitoring, security surveillance, inspection, goods delivery (Amazon), etc.  However, for such operations, navigating based on GPS information only is not sufficient. Fully autonomous operation in cities or other dense environments requires MAVs to fly at low altitudes where GPS signals are often shadowed or indoors, and to actively explore unknown environments while avoiding collisions and creating maps. Precisely autonomous operations requires MAVs to rely on alternative localization systems. For minimal weight, power consumption and budget a single camera can be used.\\
 
-Real-time monocular Visual Odometry (VO) algorithms can be used to estimate the 6 DoF pose of a camera relative to its surroundings. This is attractive for applications such as mobile robotics (mostly aerial vehicles where not much power is available) and Augmented Reality (AR) because cameras are small and self-contained and therefore easy to attach to autonomous robots or AR displays. Further, they are cheap, and are now often pre-integrated into mobile computing devices such as PDAs, phones and laptops.\\
+Real-time monocular Visual Odometry (VO) algorithms can be used to estimate the 6 DoF pose of a camera relative to its surroundings. This is attractive for many applications such as mobile robotics (and not only aerial) and Augmented Reality (AR) because cameras are small and self-contained and therefore easy to attach to autonomous robots or AR displays. Further, they are cheap, and are now often pre-integrated into mobile computing devices such as PDAs, phones and laptops.\\
 
-SVO (Semi-direct Bisual Odometry) \cite{Forster2014} is a very fast VO algorithm able to run at more than 300 frames per second on a consumer laptop. It builds a map based on keyframes and salient points. Most monocular VO are feature-based where scale and rotation invariant descriptors (SIFT, SURF\ldots) are extracted and matched in order to recover the motion from frame to frame while finally refining the pose with reprojection error minimization with the map. SVO uses a different approach by using direct methods. Instead of matching descriptors, it uses intensity gradient to minimize the error between patches around detected salient points over the frame to frame transformation. Finally, it uses Bundle Adjustment to align with the map and avoid or minimize derive.\\
+SVO (Semi-direct Visual Odometry) \cite{Forster2014} is a very fast VO algorithm able to run at more than 300 frames per second on a consumer laptop. It builds a map based on keyframes and salient points. Most monocular VO are feature-based where scale and rotation invariant descriptors (SIFT, SURF\ldots) are extracted and matched in order to recover the motion from frame to frame while finally refining the pose with reprojection error minimization with the map. SVO uses a different approach by using direct methods. Instead of matching descriptors, it uses intensity gradient to minimize the error between patches around detected salient points over the frame to frame transformation. Finally, it uses Bundle Adjustment to align with the map and avoid or minimize derive.\\
 
 The main problem with most existing monocular VO implementations (including SVO) is a lack of robustness. Rapid camera motions, occlusion, and motion blur (phenomena which are common in all but the most constrained experimental settings) can often cause tracking to fail. While this is inconvenient with any tracking system, tracking failure is particularly problematic for VO systems: not only is camera pose lost, but the estimated map could become corrupted as well. \\
 
-This problem is accentuated during a fast  agile maneuver (e.g., a flip) and so a good relocalization is important when these are intended to be performed. The envisaged relocalization scheme proceeds as follows:
+This problem is accentuated during a fast  agile maneuver (e.g., a flip) and so a good relocalization is important when these are intended to be performed. \\
+
+\subsection{Objectives}
+\label{sub:objectives}
+
+The objective of this work is to investigate and implement different monocular vision-based relocalization algorithms which should work in the following scheme:
 
 \begin{itemize}
-  \item Ina training stage, the vehicle explores the environment where the relocalization is supposed to occur. During this stage, an appropriate representation of the scene is created. 
-  \item The vehicle executes an agile maneuver during which vision-based tracking is no feasible.
+  \item In a training stage, the vehicle explores the environment where the relocalization is supposed to occur. During this stage, an appropriate representation of the scene is created. 
+  \item Something happens and the vehicle gets lost. For example the vehicle executes an agile maneuver during which vision-based tracking is no feasible.
   \item During the actual relocalization phase, the 6 DoF pose in  the built map must be estimated.
 \end{itemize}
+
+\chapter{Background}
+\label{cha:background}
+
 
 \section{Related Work}\label{sec:related_work}
 
@@ -46,6 +56,29 @@ Shotton et al. \cite{Shotton2013} also propose a method using random forests. RG
 
 To train this method a very complete dataset of RGB-D images with 6 DoF poses from the environment associated to them is needed. That makes it difficult to be used with SLAM problems where the map get populated incrementally. An online training  method should be developed.\\
 
+
+\section{Methods}
+\label{sec:methods}
+
+
+\subsubsection{Semi-Direct Visual Odometry}
+\label{ssub:semi_direct_visual_odometry}
+
+SVO is an algorithm used to track the pose of a camera over time based on keyframes. It is divided in to main parts, on one side there is the creation and maintenance of a map, and on the other side, the motion estimation. \\
+
+The map consists of images, its pose and world frame points. World points are computed from featured points in the image. To find the depth of these points the following depth filter is used. When a point is first observed a possible depth distribution is initialized with a high uncertainty. This distribution is then updated in posterior observations of the same point in a Bayesian fashion. To find a point in a new image the patch around the frame it was found it taken and slid following the epipolar line in the new image. The point whose patch has maximum correlation is taken as valid. Once the uncertainty of the depth distribution is low enough, its accepted in the map and used in the tracking step.\\
+
+Featured points are only computed in keygrames and then tracked in the following frames. A new keyframe will come in after a certain translation.\\
+
+To fond the pose of a new incoming frame the following steps are performed. First, a sparse image alignment over $SE(3)$ is performed between the new frame and the last one. That is, patches from featured points whose depth is know from the last frame are projected into the new frame. The difference between patches is an error function on the transformation that is then minimized using an iterative Gauss-Newton procedure.\\
+
+After this step a global pose of the frame is found. To improve the results not only the last frame should be used. All the points from the map, that are visible to the frame, are then projected on it straight from the keyframe where they were initially found and a similar alignment is performed. In this case, as the used frames might be farther away and the used patch is larger, an affine warp is applied to the patch. \\
+
+Finally, a motion-only Bundle Adjustment is applied to the map to optimize the pose of keyframes and the 3D location of the world points.\\
+
+
+\subsubsection{Interest point detection, descriptor extraction and matching}
+\label{ssub:interest_point_detection_descriptor_extraction_and_matching}
 
 
 
