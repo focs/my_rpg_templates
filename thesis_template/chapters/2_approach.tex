@@ -1,25 +1,25 @@
 \chapter{Approach}\label{sec:approach}
 
-Two kind of approaches will be proposed. One one side, local approaches based on the PTAM implementation, where two steps are performed. The first step has been named \textit{Place Finder} and the second \textit{Real Pose Recognition}. Multiple methods will be proposed to solve the second step. Then, on the other side, a global approach will be proposed. In this case machine learning methods (\textit{ferns}) will be used to recognize points in space.
+We propose two different approaches to relocalization: first, a local approaches based on the PTAM implementation, where two steps are performed. The first step has been named \textit{Place Finder} and the second \textit{Real Pose Recognition}. Multiple methods will be proposed to solve the second step. Then, on the other side, a global approach will be proposed. In this case machine learning methods (\textit{ferns}) will be used to recognize points in space.
 
 \section{PTAM method}
 \label{sec:ptam_method}
 
-PTAM is a VO algorithm based on keyframes and so the relocalization method proposed is based on keyframes as well. Every keyframe has asociated with it a camera pose that will be used to relocalize. During the relocalization there are two steps involved. We have called the first step \textit{Place Finder} and the second \textit{Real Pose Finder}.
+PTAM~\cite{KleinMurray2007} is a VO algorithm based on keyframes and so the relocalization method proposed is based on keyframes as well. Every keyframe has associated with a camera pose that will be used to relocalize. During the relocalization there are two steps involved. We called the first step \textit{Place Finder} and the second \textit{Real Pose Finder}.
 
 \subsection{Place Finder}
 \label{ssub:place_recognition}
 
 During this step, the algorithm tries to find the keyframe image most similar to the last acquired image. The pose associated with the most similar keyframe is used as an initial rough estimation of the current pose. The similarity score should be resistant to view point because the new acquired image will, most probably, never be taken from the same pose as any of the keyframes. Also it should be fast to compute.\\
 
-The used similarity score is the Cross Correlation between images meaning the sum of the squared error between two zero-mean images. To make to computation faster both images are resized become $40\times30$. Then, to make the images more resistant to view point changes it is blurred with a $3\times3$ Gaussian kernel with $\sigma=2.5$. The resulting storied image is a resized, blurred and zero-mean image called \textit{small-blurry-image}.\\
+The used similarity score is the Cross Correlation between images meaning the sum of the squared error between two zero-mean images. To make to computation faster both images are resized become $40\times30$. Then, to make the images more resistant to view point changes it is blurred with a $3\times3$ Gaussian kernel with $\sigma=2.5$. The resulting image is a resized, blurred and zero-mean image called \textit{small-blurry-image}.\\
 
-During the normal map building pipeline this image is computed and stored every time a new keyframe is added to the map. And then, during the relocalization, the sum of squared difference between every stored \textit{small-blurry-image} and the last acquired frame is computed to find the most similar keyframe and then use its pose as an initial estimation of the current camera pose.\\
+During the normal map building pipeline this image is computed and stored every time a new keyframe is added to the map. And then, during the relocalization, the sum of squared difference between every stored \textit{small-blurry-image} and the last acquired frame is computed, the corss correlation measure, to find the most similar keyframe, which is then use its pose as an initial estimation of the current camera pose.\\
 
 \subsubsection{Method validation}
 \label{ssub:cc_method_validation}
 
-To evaluate the method the real distance between two frames is going to be compared with the Cross Correlation value described above. Far away frames should be dissimilar and close by frames should be more similar and have a lower CC value. In figure \ref{fig:real_distance_confusion_matrix} can be seen the pair distances between image using the real pose while in figure \ref{fig:CC_confusion_matrix} there is the approximated pair distances using the CC value as distance. It can be seen that they have a similar distribution. Also the correlation of 0.4337 shows that one explains the other in most cases.\\
+To evaluate the method the real distance between two frames is going to be compared with the Cross Correlation value described above. Far away frames should be dissimilar and close by frames should be more similar and have a lower CC value. In Figure~\ref{fig:real_distance_confusion_matrix} can be seen the pair distances between image using the real pose while in Figure~\ref{fig:CC_confusion_matrix} there is the approximated pair distances using the CC value as distance. It can be seen that they have a similar distribution. Also the correlation of 0.4337 shows numerically its relation.\\
 
 \begin{figure}
   \begin{subfigure}[b]{0.60\linewidth}
@@ -37,7 +37,7 @@ To evaluate the method the real distance between two frames is going to be compa
 \end{figure}
 
 
-Finally, to show that this method can be used, for every image the most CC similar image was taken being it real $K$ closest image. Ideally the most CC similar image should always be the closest image. In figure \ref{fig:K_closest} there is the count of occurrences of each $K$. It can be seen that most images resolve to the first or second closest image using this method.\\
+Finally, to show that this method can be used, for every image the most similar, in CC seance, image was taken being it actually the  $K$th closest image. Ideally the most similar image should always be the closest image. In Figure \ref{fig:K_closest} there is the count of occurrences of each $K$. It can be seen that most images resolve to the first or second closest image using this method.\\
 
 \begin{figure}[!htbp]
   \centering
@@ -65,12 +65,12 @@ Finally, to show that this method can be used, for every image the most CC simil
 \end{figure}
 
 
-In figure \ref{fig:cc_example} of what would the algorithm return for a given query image for which there is no pose information available. Figure \ref{fig:query_1} is the image seen by the camera at the moment of the relocalization and \ref{fig:best_match_1} is what the system found to be the most similar, closest, image using the CC procedure explained previously. In this case the to image's camera pose are not the same, but they should be similar enough in order to find the difference in posterior steps.\\
+In Figure \ref{fig:cc_example} demonstrates what the algorithm would return for a given query image for which there is no pose information available. Figure \ref{fig:query_1} is the image seen by the camera at the moment of the relocalization and \ref{fig:best_match_1} is what the system found to be the most similar, closest, image using the cross correlation procedure explained previously. In this case the to image's camera pose are not the same, but they should be similar enough in order to find the difference in posterior steps.\\
 
 \subsection{Real Pose Finder}
 \label{sub:real_pose_finder}
 
-The second step of the relocalization algorithm from PTAM tries to refine the pose of the found to be most similar keyframe to explain the current pose of the camera. During this step, in the implementation from PTAM, only rotations are corrected. An image alignment through optimization algorithm (ESM)~\ref{sec:lucas_kanard} is used to find the $SE(2)$ transformation between the two and then an other minimization is performed to find a transformation in the world frame.\\
+The second step of the relocalization algorithm from PTAM tries to refine the pose of the found to be most similar keyframe to explain the current pose of the camera. During this step, in the implementation from PTAM, only rotations are corrected. An image alignment through optimization algorithm (ESM~\cite{lovegrove2012parametric}) is used to find the $SE(2)$ transformation between the two and then an other minimization is performed to find a transformation in the world frame.\\
 
 \subsubsection{Image alignment}
 \label{ssub:image_alignment}
@@ -141,7 +141,7 @@ The solution that minimizes~\ref{eq:delta_error}  on $\Delta p$ can be found in 
   \label{eq:derivated}
 \end{equation}
 
-Then, setting~\ref{eq:derivated} equal to zero to find where it is minimized (or maximized) by $Delta p$ and isolating $\Delta p$ the next closed form solution can be found:
+Then, setting~\ref{eq:derivated} equal to zero to find where it is minimized (or maximized) by $\Delta p$ and isolating $\Delta p$ the next closed form solution can be found:
 
 \begin{equation}
   \Delta p = H^{-1} \sum_x \left[\nabla I \frac{\partial W}{\partial p}\right]^T \left[ T(x) - I(W(x;p)) \right]
@@ -154,7 +154,7 @@ Where $H$ is the Gauss-Newton approximation of the Hessian matrix:
 \end{equation}
 
 
-The ESM algorithm used in PTAM is very similar to the derived above with the difference that where the Lucas-Kanade takes the gradient from the input image, ESM used both the gradient of the input image and the gradient of the template image and averages them.
+The ESM algorithm used in PTAM is very similar to the derived above with the difference that while the Lucas-Kanade takes the gradient from the input image, ESM used both the gradient of the input image and the gradient of the template image and averages them.
 
 \begin{equation}
   \nabla I = \frac{1}{2} \left[\nabla I_t + \nabla I_q \right]
@@ -198,7 +198,7 @@ During the implementation, $\alpha$ is considered to be close to zero. This way 
 \subsubsection{World frame interpretation}
 \label{ssub:world_frame_interpretation}
 
-This transformation is not easily interpreted in $SE(3)$, a translation in pixels can mean different things in the world frame depending on the distance to the object. Also, in $SE(3)$ there are three angular DoF, not one. The found transformation can be interpreted in multiple ways in the world frame. In the PTAM implementation it is assumed that the translation will only involve rotations, and so, the next step is the mapping from $SE(2)$ to $SO(3)$.\\
+This transformation is not easily interpreted in $SE(3)$, a translation in pixels can mean different things in the world frame depending on the distance to the object. Also, in $SE(3)$ there are three angular degrees of freedom, only. The found transformation can be interpreted in multiple ways in the world frame. In the PTAM implementation it is assumed that the translation will only involve rotations, and so, the next step is the mapping from $SE(2)$ to $SO(3)$. This final found transformation, only including rotations, will actually translate the frame pose because this rotation is not, probability, applied from the origin.\\
 
 A Gauss-Newton minimization algorithm is used to find the $SO(3)$ model that modifies the image in the same way as the found $SE(2)$ model. The minimization is over the $SO(3)$ parameters $\xi$ and the error is expressed as in~\ref{equ:so3_error}
 
@@ -234,7 +234,7 @@ with
 \subsubsection{Method validation}
 \label{ssub:esm_method_validation}
 
-To visualize the results of the different optimization procedures described above, the found transformation has been applied to the image. In the first step, the $SE(2)$ transformation between two image is computed and the transformed image on every step is one of the used variables. In figure~\ref{fig:se2_transformation_1} can be seen the final transformation found from~\ref{fig:best_match_1} to~\ref{fig:query_1}. In figure~\ref{fig:se3_error_1} the error can be visualized, there it can be seen that translation and rotation are well corrected but there still is a misalignment caused mostly by a change on scale which is not taken into account during the alignment.\\
+To visualize the results of the different optimization procedures described above, the found transformation has been applied to the image. In the first step, the $SE(2)$ transformation between two image is computed and the transformed image at every step is one of the used variables. In Figure~\ref{fig:se2_transformation_1} can be seen the final transformation found from~\ref{fig:best_match_1} to~\ref{fig:query_1}. In Figure~\ref{fig:se3_error_1} the error of the overplayed images is visualized, there it can be seen that translation and rotation are well corrected but there still is a misalignment caused mostly by a change on scale which is not taken into account during the alignment.\\
 
 \begin{figure}[htpb]
   \centering
@@ -243,7 +243,7 @@ To visualize the results of the different optimization procedures described abov
   \label{fig:se2_transformation_1}
 \end{figure}
 
-On the other side, during the second minimization where there $SO(3)$ translation is found, no image is actually involved, only two pixel coordinates. To generate a visualization of the translation the calibration of the camera is needed. Every pixel is unprotected form the image into the image plane, then the transformation is applied to it and finally it is projected back to the image. The result of the described procedure can be seen in figure~\ref{fig:so3_transformation_1}.\\
+On the other side, during the second minimization where a $SO(3)$ translation is found, no image is actually involved, only two pixel coordinates. To generate a visualization of the translation the calibration of image unit plane. Every pixel is unprojected form the image into the image plane, then the transformation is applied to it and finally it is projected back to the image. The result of the described procedure can be seen in Figure~\ref{fig:so3_transformation_1}.\\
 
 \begin{figure}[htpb]
   \centering
@@ -263,30 +263,30 @@ On the other side, during the second minimization where there $SO(3)$ translatio
 \subsection{Real Pose Finder Alternative}
 \label{sub:real_pose_finder_alternative}
 
-During the mapping of an area the VO algorithm finds landmarks in the world frame which are associated with detected featured points in keyframes (i.e. every featured point in an image is related to a $3D$ position in the world frame). Given a new image, some extracted featured points can be related to a keyframe using the description-matching fashion which at the same time are related to world positions. From this information the full 6 DoF translation $SE(3)$ can be computed using the three point algorithm.\\
+During the mapping of an area the VO algorithm finds landmarks in the world frame which are associated with detected featured points in keyframes (i.e. every featured point in an image is related to a $3D$ position in the world frame). Given a new image, some extracted featured points can be related to a keyframe using descriptor-matching which at the same time are related to world positions. From this information the full 6 DoF translation $SE(3)$ can be computed using the prospective three-point algorithm (P3P).\\
 
-The 3pt algorithm and its implementation is described in \cite{kneipopengv}. In this case the described \textit{Central absolute pose} is dealt with.
+The 3pt algorithm and its implementation is described in \cite{kneipopengv}. In this case the described \textit{Central absolute pose} is used.
 
 \begin{figure}[htpb]
   \centering
   \includegraphics[width=0.6\linewidth]{img/absolute_central.png}
-  \caption{From camera frame bearings (or image pixels if the camera calibration is available) and fix frame points the transformation between the two frames can be computed using the 3pt algorithm. Image from \cite{kneipopengv}}
+  \caption{From camera frame vectors $f$ (or image pixels if the camera calibration is available) and fix points $p$ the transformation between the two coordinate frames can be computed using the 3pt algorithm. Image from \cite{kneipopengv}}
   \label{fig:img/absolute_centra}
 \end{figure}
 
-First, descriptors from every featured point are extracted, both SIFT and SURF can be used updating a configuration file. Second, a brute force KNN matching is performed from all the extracted descriptors from on image and all the descriptors of the second image. The first, and second most similar descriptor are retrieved. Then, only good matches are kept, that is, using the matching technique described by Lowe, only matches with a descriptor ratio between the first and the second closest match of 0.8 or less are kept, only discriminant matches are used.\\
+First, descriptors from every featured point are extracted (both SIFT and SURF can be used updating a configuration file, but in the experiments SIFT will be used). Second, a brute force KNN matching is performed from all the extracted descriptors from on image and all the descriptors of the second image. The first, and second most similar descriptor are retrieved. Then, only good matches are kept, that is, using the matching technique described by Lowe~\cite{lowe2004distinctive}, only matches with a descriptor ratio between the first and the second closest match of 0.8 or less are kept, only discriminant matches are used.\\
 
-Finally, the 3pt algorithm is fed with the pixel positions from the query image and the landmarks from the other. Because there are still outliers after the described simple filtering, this process is run in RANSAC framework. \\
+Finally, the three-point algorithm is fed with the pixel positions from the query image and the landmarks from the other. Because there are still outliers after the described simple filtering, this process is run in RANSAC~\cite{fischler1981random} framework. \\
 
 
 \subsubsection{Method validation}
 \label{ssub:3pt_method_validation}
 
-Figures~\ref{fig:3pt_matches} and~\ref{fig:3pt_inliers} are an example of the described above. The pose outputted was used to correctly relocalize and so it was correct.\\
+Figures~\ref{fig:3pt_matches} and~\ref{fig:3pt_inliers} are an example of the described above. The pose outputted was used to successfully relocalize in SVO.\\
 
-The first part, where descriptors are extracted, matches and filtered, can be seen in figure~\ref{fig:3pt_matches}.  It can be seen that most matches are correct after this first filtering.\\
+The first part, where descriptors are extracted, matches and filtered, can be seen in Figure~\ref{fig:3pt_matches}.  It can be seen that most matches are correct after this first filtering.\\
 
-The inliers found during the RANSAC process can be seen in~\ref{fig:3pt_inliers}, it has to be kept in mind that the found transformation is not from image to image but from world, using world points, to frame. These world points can not be visualized and its precision could lead to not being included to the inliers group.\\
+The inliers found during the RANSAC process can be seen in~\ref{fig:3pt_inliers}. One has to keep in mind that the model which is fitted  is not from image to image but from world frame, using world points, to camera frame. These world points can not be visualized, only image points, and its precision could lead to not be considered. So some matches which seem right in the image might not be used to calculate the transformation.\\
 
 \begin{figure}[htpb]
   \centering
@@ -307,9 +307,9 @@ The inliers found during the RANSAC process can be seen in~\ref{fig:3pt_inliers}
 \section{Using ferns}
 \label{sec:using_ferns}
 
-As said previously with the three-point algorithm it is possible to recover the 6 DoF of the camera pose from the relation from pixel coordinates and points in space. In this case machine learning techniques are used to model this relationship. In the classifier scheme, an object in space is a class and multiple views seen from the camera should all be classified as this class.\\
+As said previously with the three-point algorithm it is possible to recover the 6 DoF of the camera pose from the relation from pixel coordinates and points in space. In this case machine learning techniques are used to model this relationship. In the classifier scheme, an object in space is a class and multiple views seen from the camera should all be classified as this class~\cite{}.\\
 
-A \textit{fern} is a descriptor made from a set of binary tests~\ref{eq:fern_test}, made in a similarly  to random forests but flattened. When used as a classifier every possible evaluation of a \textit{fern} will contain a posterior provability distribution for every class, like random forests' final leafs do.\\
+A \textit{fern} is a descriptor made from a set of binary tests such as~\ref{eq:fern_test}, build like random forests but flattened (no tree structure). When used as a classifier, every possible evaluation of a \textit{fern} will contain a posterior probability distribution for every class, like random forests' final leafs do.\\
 
 \begin{equation}
   f_j =
@@ -322,7 +322,7 @@ A \textit{fern} is a descriptor made from a set of binary tests~\ref{eq:fern_tes
   \label{eq:fern_test}
 \end{equation}
 
-The result of the tests is encoded into the bits of an unsigned integer ~\ref{lst:fern_evaluation}. If a \textit{fern} has $S$ tests then its representation can have $K=2^{S}$ possible values which are then used  as index of its posterior distribution.\\
+The result of the tests is encoded into the bits of an unsigned integer like done in~\ref{lst:fern_evaluation}. If a \textit{fern} has $S$ tests then its representation can have $K=2^{S}$ possible values which are then used  as index of its posterior distribution.\\
 
 \lstset{language=C++,numbers=none,caption=Fern evaluation, label=lst:fern_evaluation}
 \begin{lstlisting}[frame=lines]
@@ -363,13 +363,13 @@ Assuming a uniform prior and since the denominator is a scaling factor the probl
   \^c_i = \underset{c_i}{\text{argmax}} \quad P(f_1, f_2, \ldots, f_N | C = c_i)
 \end{equation}
 
-Since this simple tests are very simple many of them are needed ($N \approx 300$), the storage of joint probabilities for every outcome is no feasible because $2^N$ entries for each class would be needed. One way to avoid this storage is to assume total independence between tests, this way the class provability distributions could be calculated like
+Since these tests are very simple, many of them are needed ($N \approx 300$), the storage of joint probabilities for every outcome is no feasible because $2^N$ entries for each class would be required. One way to avoid this storage is to assume total independence between tests, this way the class probability distributions can be calculated like
 
 \begin{equation}
   P(f_1, f_2, \ldots, f_N | C = c_i) = \prod^{N}_{j=1}P(f_j | C = c_i)
 \end{equation}
 
-but this ignores the possible correlation between tests. With \testit{ferns} a trade off is achieved, tests are grouped in sets $F$ and then the conditional provability becomes
+but this ignores the possible correlation between tests. With \testit{ferns} a trade off is achieved, tests are grouped in sets $F$ and then the conditional probability becomes
 
 \begin{equation}
   P(f_1, f_2, \ldots, f_N | C = c_i) = \prod^{M}_{k=1} P(F_k | C = c_i)
@@ -384,428 +384,471 @@ During the training step many different views of a world point are needed to cor
 
 In the studied case here, the algorithm can already provide multiple real views of the object (around 5-10), but still on each patch many randomly generated warps are applied and used to train (usually 100). In this case, the warps are simplified to include only image rotation and scale.\\
 
-During the training, every warped patch is evaluated with every \textit{fern}. The count of a class evaluation on each \textit{fern} is performed along with the count of per class patches used. Those values are used during the classification step to calculate the provability distributions
+During the training, every warped patch is evaluated with every \textit{fern}. The count of a class evaluation on each \textit{fern} is performed along with the count of per class patches used. Those values are used during the classification step to calculate the probability distributions
 
 \begin{equation}
   p_{k,c_i} = \frac{N_{k,c_i} + N_r}{N_{c_i} + K \times N_r}
 \end{equation}
 
-where $N_{k,c_i}$ is the number views of class $c_i$ that evaluates to $k$ and $N_{c_i}$ is the number of views of class $c_i$ to train. A regularization term $N_r = 1$ is used to avoid provabilities evaluating to zero.\\
+where $N_{k,c_i}$ is the number views of class $c_i$ that evaluates to $k$ and $N_{c_i}$ is the number of views of class $c_i$ to train. A regularization term $N_r = 1$ is used to avoid probabilities evaluating to zero.\\
 
 
 \subsubsection{Method Validation}
 \label{ssub:ferns_method_validation}
 
-To validate the classifier a small test has been set up. One image is taken and from it 30 random patches are used to train the classifier. Then, 100 random warps are applied to those patches and classified. This process is reproduced 100 times. \\
+To validate the classifier a small test has been set up. One image is taken and from it 100 random patches are used to train the classifier. Then, 100 random warps are applied to these patches and are classified. This process is reproduced 100 times because it is a random process. The ratio of well classified warped patches with contrast of the number of \textit{ferns} used and the number of tests per \textit{fern} can be seen in the next plot.
 
 
-\begin{tikzpicture}
-\begin{axis}[
-height=9cm,
-width=9cm,
-grid=major,
-xlabel=hola,
-ylabel=adeu
-]
+%\begin{tikzpicture}
+%\begin{axis}[
+%height=9cm,
+%width=9cm,
+%grid=major,
+%xlabel=hola,
+%ylabel=adeu
+%]
+%
+%\addplot coordinates
+%{
+%  (  5,0.611906)
+%  ( 10,0.746953)
+%  ( 15,0.81354 )
+%  ( 20,0.85091 )
+%  ( 25,0.868608)
+%  ( 30,0.877294)
+%  ( 35,0.8861  )
+%  ( 40,0.894782)
+%  ( 45,0.898805)
+%  ( 50,0.900189)
+%  ( 55,0.903035)
+%  ( 60,0.914335)
+%  ( 65,0.91471 )
+%  ( 70,0.909981)
+%  ( 75,0.917943)
+%  ( 80,0.91386 )
+%  ( 85,0.91913 )
+%  ( 90,0.91375 )
+%  ( 95,0.918169)
+%  (100,0.922886)
+%  (105,0.918348)
+%  (110,0.922474)
+%  (115,0.923372)
+%  (120,0.918301)
+%  (125,0.921832)
+%  (130,0.92336 )
+%  (135,0.926459)
+%  (140,0.929506)
+%  (145,0.925352)
+%  (150,0.927638)
+%};
+%\addlegendentry{Starting test with 8}
+%
+%\addplot coordinates
+%{
+%  (  5,0.647313)
+%  ( 10,0.773075)
+%  ( 15,0.828111)
+%  ( 20,0.851374)
+%  ( 25,0.873437)
+%  ( 30,0.8884  )
+%  ( 35,0.895329)
+%  ( 40,0.897437)
+%  ( 45,0.900028)
+%  ( 50,0.9106  )
+%  ( 55,0.914759)
+%  ( 60,0.915583)
+%  ( 65,0.923693)
+%  ( 70,0.920662)
+%  ( 75,0.922914)
+%  ( 80,0.924085)
+%  ( 85,0.919677)
+%  ( 90,0.922637)
+%  ( 95,0.929174)
+%  (100,0.926049)
+%  (105,0.920981)
+%  (110,0.927521)
+%  (115,0.927604)
+%  (120,0.928871)
+%  (125,0.933295)
+%  (130,0.932722)
+%  (135,0.931251)
+%  (140,0.934049)
+%  (145,0.932926)
+%  (150,0.932927)
+%};
+%\addlegendentry{Starting test with 9}
+%
+%\addplot coordinates
+%{
+%  (  5,0.666433)
+%  ( 10,0.780569)
+%  ( 15,0.841805)
+%  ( 20,0.861785)
+%  ( 25,0.880106)
+%  ( 30,0.889655)
+%  ( 35,0.902569)
+%  ( 40,0.907179)
+%  ( 45,0.90605 )
+%  ( 50,0.915868)
+%  ( 55,0.919375)
+%  ( 60,0.926114)
+%  ( 65,0.922165)
+%  ( 70,0.928139)
+%  ( 75,0.927301)
+%  ( 80,0.928778)
+%  ( 85,0.937536)
+%  ( 90,0.927311)
+%  ( 95,0.932855)
+%  (100,0.930164)
+%  (105,0.937211)
+%  (110,0.934534)
+%  (115,0.931139)
+%  (120,0.933956)
+%  (125,0.934776)
+%  (130,0.936754)
+%  (135,0.939867)
+%  (140,0.937029)
+%  (145,0.933167)
+%  (150,0.931782)
+%};
+%\addlegendentry{Starting test with 10}
+%
+%\addplot coordinates
+%{
+%  (  5,0.677536)
+%  ( 10,0.793594)
+%  ( 15,0.843825)
+%  ( 20,0.876226)
+%  ( 25,0.88533 )
+%  ( 30,0.898161)
+%  ( 35,0.905165)
+%  ( 40,0.912597)
+%  ( 45,0.917115)
+%  ( 50,0.915842)
+%  ( 55,0.926304)
+%  ( 60,0.924285)
+%  ( 65,0.923873)
+%  ( 70,0.926913)
+%  ( 75,0.930721)
+%  ( 80,0.932727)
+%  ( 85,0.930798)
+%  ( 90,0.932624)
+%  ( 95,0.932255)
+%  (100,0.93505 )
+%  (105,0.940008)
+%  (110,0.93772 )
+%  (115,0.941688)
+%  (120,0.937759)
+%  (125,0.94243 )
+%  (130,0.936116)
+%  (135,0.944297)
+%  (140,0.9423  )
+%  (145,0.942671)
+%  (150,0.943069)
+%};
+%\addlegendentry{Starting test with 11}
+%
+%\addplot coordinates
+%{
+%  (  5,0.691823)
+%  ( 10,0.801977)
+%  ( 15,0.84622 )
+%  ( 20,0.871452)
+%  ( 25,0.88331 )
+%  ( 30,0.905238)
+%  ( 35,0.909072)
+%  ( 40,0.908045)
+%  ( 45,0.911443)
+%  ( 50,0.917715)
+%  ( 55,0.924286)
+%  ( 60,0.929765)
+%  ( 65,0.928045)
+%  ( 70,0.931749)
+%  ( 75,0.926873)
+%  ( 80,0.934515)
+%  ( 85,0.932165)
+%  ( 90,0.944389)
+%  ( 95,0.937691)
+%  (100,0.933969)
+%  (105,0.942654)
+%  (110,0.941569)
+%  (115,0.943457)
+%  (120,0.939013)
+%  (125,0.943969)
+%  (130,0.941761)
+%  (135,0.945584)
+%  (140,0.940012)
+%  (145,0.943518)
+%  (150,0.942326)
+%};
+%\addlegendentry{Starting test with 12}
+%
+%\addplot coordinates
+%{
+%  (  5,0.697447) 
+%  ( 10,0.80819 )
+%  ( 15,0.848335)
+%  ( 20,0.873454)
+%  ( 25,0.889331)
+%  ( 30,0.897887)
+%  ( 35,0.909651)
+%  ( 40,0.917206)
+%  ( 45,0.920271)
+%  ( 50,0.919475)
+%  ( 55,0.925751)
+%  ( 60,0.929024)
+%  ( 65,0.926151)
+%  ( 70,0.929887)
+%  ( 75,0.932009)
+%  ( 80,0.93693 )
+%  ( 85,0.937005)
+%  ( 90,0.940786)
+%  ( 95,0.9351  )
+%  (100,0.938899)
+%  (105,0.941297)
+%  (110,0.943029)
+%  (115,0.942325)
+%  (120,0.942684)
+%  (125,0.946154)
+%  (130,0.9396  )
+%  (135,0.948533)
+%  (140,0.948097)
+%  (145,0.944212)
+%  (150,0.944371)
+%};
+%\addlegendentry{Starting test with 13}
+%
+%\end{axis}
+%\end{tikzpicture}
+%
 
-\addplot coordinates
-{
-  (  5,0.611906)
-  ( 10,0.746953)
-  ( 15,0.81354 )
-  ( 20,0.85091 )
-  ( 25,0.868608)
-  ( 30,0.877294)
-  ( 35,0.8861  )
-  ( 40,0.894782)
-  ( 45,0.898805)
-  ( 50,0.900189)
-  ( 55,0.903035)
-  ( 60,0.914335)
-  ( 65,0.91471 )
-  ( 70,0.909981)
-  ( 75,0.917943)
-  ( 80,0.91386 )
-  ( 85,0.91913 )
-  ( 90,0.91375 )
-  ( 95,0.918169)
-  (100,0.922886)
-  (105,0.918348)
-  (110,0.922474)
-  (115,0.923372)
-  (120,0.918301)
-  (125,0.921832)
-  (130,0.92336 )
-  (135,0.926459)
-  (140,0.929506)
-  (145,0.925352)
-  (150,0.927638)
-};
-\addlegendentry{Starting test with 8}
+\begin{figure}[htpb]
 
-\addplot coordinates
-{
-  (  5,0.647313)
-  ( 10,0.773075)
-  ( 15,0.828111)
-  ( 20,0.851374)
-  ( 25,0.873437)
-  ( 30,0.8884  )
-  ( 35,0.895329)
-  ( 40,0.897437)
-  ( 45,0.900028)
-  ( 50,0.9106  )
-  ( 55,0.914759)
-  ( 60,0.915583)
-  ( 65,0.923693)
-  ( 70,0.920662)
-  ( 75,0.922914)
-  ( 80,0.924085)
-  ( 85,0.919677)
-  ( 90,0.922637)
-  ( 95,0.929174)
-  (100,0.926049)
-  (105,0.920981)
-  (110,0.927521)
-  (115,0.927604)
-  (120,0.928871)
-  (125,0.933295)
-  (130,0.932722)
-  (135,0.931251)
-  (140,0.934049)
-  (145,0.932926)
-  (150,0.932927)
-};
-\addlegendentry{Starting test with 9}
+  \centering
+  \begin{tikzpicture}
+  \begin{axis}[
+  height=9cm,
+  width=9cm,
+  grid=major,
+  xlabel=Number of ferns used,
+  ylabel=Performance,
+  legend style = {
+    at={(0.9,0.5)}
+  }
+  ]
 
-\addplot coordinates
-{
-  (  5,0.666433)
-  ( 10,0.780569)
-  ( 15,0.841805)
-  ( 20,0.861785)
-  ( 25,0.880106)
-  ( 30,0.889655)
-  ( 35,0.902569)
-  ( 40,0.907179)
-  ( 45,0.90605 )
-  ( 50,0.915868)
-  ( 55,0.919375)
-  ( 60,0.926114)
-  ( 65,0.922165)
-  ( 70,0.928139)
-  ( 75,0.927301)
-  ( 80,0.928778)
-  ( 85,0.937536)
-  ( 90,0.927311)
-  ( 95,0.932855)
-  (100,0.930164)
-  (105,0.937211)
-  (110,0.934534)
-  (115,0.931139)
-  (120,0.933956)
-  (125,0.934776)
-  (130,0.936754)
-  (135,0.939867)
-  (140,0.937029)
-  (145,0.933167)
-  (150,0.931782)
-};
-\addlegendentry{Starting test with 10}
+  \addplot coordinates
+  {
+  (5,0.455156)
+  (10,0.620105)
+  (15,0.700959)
+  (20,0.745575)
+  (25,0.774825)
+  (30,0.790016)
+  (35,0.803403)
+  (40,0.812852)
+  (45,0.826499)
+  (50,0.835003)
+  (55,0.837928)
+  (60,0.840413)
+  (65,0.841138)
+  (70,0.846428)
+  (75,0.848151)
+  (80,0.85363)
+  (85,0.853007)
+  (90,0.856371)
+  (95,0.857518)
+  (100,0.858881)
+  (105,0.861345)
+  (110,0.857811)
+  (115,0.865893)
+  (120,0.865168)
+  (125,0.861729)
+  (130,0.865707)
+  (135,0.862695)
+  (140,0.870416)
+  (145,0.866652)
+  (150,0.867423)
+  };
+  \addlegendentry{8 tests}
 
-\addplot coordinates
-{
-  (  5,0.677536)
-  ( 10,0.793594)
-  ( 15,0.843825)
-  ( 20,0.876226)
-  ( 25,0.88533 )
-  ( 30,0.898161)
-  ( 35,0.905165)
-  ( 40,0.912597)
-  ( 45,0.917115)
-  ( 50,0.915842)
-  ( 55,0.926304)
-  ( 60,0.924285)
-  ( 65,0.923873)
-  ( 70,0.926913)
-  ( 75,0.930721)
-  ( 80,0.932727)
-  ( 85,0.930798)
-  ( 90,0.932624)
-  ( 95,0.932255)
-  (100,0.93505 )
-  (105,0.940008)
-  (110,0.93772 )
-  (115,0.941688)
-  (120,0.937759)
-  (125,0.94243 )
-  (130,0.936116)
-  (135,0.944297)
-  (140,0.9423  )
-  (145,0.942671)
-  (150,0.943069)
-};
-\addlegendentry{Starting test with 11}
+  \addplot coordinates
+  {
+  (5,0.488611)
+  (10,0.649876)
+  (15,0.724042)
+  (20,0.76488)
+  (25,0.789768)
+  (30,0.807459)
+  (35,0.819871)
+  (40,0.827699)
+  (45,0.838572)
+  (50,0.843236)
+  (55,0.851409)
+  (60,0.853273)
+  (65,0.858985)
+  (70,0.86166)
+  (75,0.862066)
+  (80,0.867132)
+  (85,0.861412)
+  (90,0.86384)
+  (95,0.864704)
+  (100,0.872822)
+  (105,0.869988)
+  (110,0.87266)
+  (115,0.874865)
+  (120,0.874463)
+  (125,0.876594)
+  (130,0.880322)
+  (135,0.876503)
+  (140,0.877519)
+  (145,0.881349)
+  (150,0.88105)
+  };
+  \addlegendentry{ 9 tests}
 
-\addplot coordinates
-{
-  (  5,0.691823)
-  ( 10,0.801977)
-  ( 15,0.84622 )
-  ( 20,0.871452)
-  ( 25,0.88331 )
-  ( 30,0.905238)
-  ( 35,0.909072)
-  ( 40,0.908045)
-  ( 45,0.911443)
-  ( 50,0.917715)
-  ( 55,0.924286)
-  ( 60,0.929765)
-  ( 65,0.928045)
-  ( 70,0.931749)
-  ( 75,0.926873)
-  ( 80,0.934515)
-  ( 85,0.932165)
-  ( 90,0.944389)
-  ( 95,0.937691)
-  (100,0.933969)
-  (105,0.942654)
-  (110,0.941569)
-  (115,0.943457)
-  (120,0.939013)
-  (125,0.943969)
-  (130,0.941761)
-  (135,0.945584)
-  (140,0.940012)
-  (145,0.943518)
-  (150,0.942326)
-};
-\addlegendentry{Starting test with 12}
+  \addplot coordinates
+  {
+  (5,0.520388)
+  (10,0.669885)
+  (15,0.73953)
+  (20,0.779234)
+  (25,0.807139)
+  (30,0.81853)
+  (35,0.831105)
+  (40,0.841473)
+  (45,0.846916)
+  (50,0.853759)
+  (55,0.85682)
+  (60,0.863666)
+  (65,0.867547)
+  (70,0.866015)
+  (75,0.87127)
+  (80,0.876509)
+  (85,0.879735)
+  (90,0.873673)
+  (95,0.883855)
+  (100,0.882149)
+  (105,0.879932)
+  (110,0.88022)
+  (115,0.882092)
+  (120,0.882542)
+  (125,0.886073)
+  (130,0.884312)
+  (135,0.890578)
+  (140,0.889372)
+  (145,0.888186)
+  (150,0.889946)
+  };
+  \addlegendentry{ 10 tests}
 
-\addplot coordinates
-{
-  (  5,0.697447) 
-  ( 10,0.80819 )
-  ( 15,0.848335)
-  ( 20,0.873454)
-  ( 25,0.889331)
-  ( 30,0.897887)
-  ( 35,0.909651)
-  ( 40,0.917206)
-  ( 45,0.920271)
-  ( 50,0.919475)
-  ( 55,0.925751)
-  ( 60,0.929024)
-  ( 65,0.926151)
-  ( 70,0.929887)
-  ( 75,0.932009)
-  ( 80,0.93693 )
-  ( 85,0.937005)
-  ( 90,0.940786)
-  ( 95,0.9351  )
-  (100,0.938899)
-  (105,0.941297)
-  (110,0.943029)
-  (115,0.942325)
-  (120,0.942684)
-  (125,0.946154)
-  (130,0.9396  )
-  (135,0.948533)
-  (140,0.948097)
-  (145,0.944212)
-  (150,0.944371)
-};
-\addlegendentry{Starting test with 13}
+  \addplot coordinates
+  {
+  (5,0.539702)
+  (10,0.689876)
+  (15,0.754419)
+  (20,0.793475)
+  (25,0.812848)
+  (30,0.828437)
+  (35,0.84063)
+  (40,0.847733)
+  (45,0.858395)
+  (50,0.865242)
+  (55,0.869159)
+  (60,0.871521)
+  (65,0.871361)
+  (70,0.877042)
+  (75,0.879435)
+  (80,0.880008)
+  (85,0.883295)
+  (90,0.885611)
+  (95,0.886914)
+  (100,0.888524)
+  (105,0.887305)
+  (110,0.89099)
+  (115,0.889118)
+  (120,0.890359)
+  (125,0.890729)
+  (130,0.897019)
+  (135,0.893813)
+  (140,0.897917)
+  (145,0.899281)
+  (150,0.89439)
+  };
+  \addlegendentry{11 tests}
 
-\end{axis}
-\end{tikzpicture}
+  \addplot coordinates
+  {
+  (5,0.554762)
+  (10,0.701209)
+  (15,0.763357)
+  (20,0.797581)
+  (25,0.817505)
+  (30,0.834899)
+  (35,0.848518)
+  (40,0.855628)
+  (45,0.860604)
+  (50,0.868656)
+  (55,0.867211)
+  (60,0.873718)
+  (65,0.879655)
+  (70,0.882888)
+  (75,0.885119)
+  (80,0.887547)
+  (85,0.890143)
+  (90,0.890705)
+  (95,0.892726)
+  (100,0.894182)
+  (105,0.891051)
+  (110,0.896253)
+  (115,0.895273)
+  (120,0.898981)
+  (125,0.899296)
+  (130,0.897772)
+  (135,0.900302)
+  (140,0.900423)
+  (145,0.899991)
+  (150,0.901546)
+  };
+  \addlegendentry{12 tests}
 
+  \addplot coordinates
+  {
+  (5,0.571666)
+  (10,0.705516)
+  (15,0.768864)
+  (20,0.801934)
+  (25,0.821235)
+  (30,0.835033)
+  (35,0.849129)
+  (40,0.860822)
+  (45,0.863828)
+  (50,0.869423)
+  (55,0.876834)
+  (60,0.876493)
+  (65,0.886291)
+  (70,0.885457)
+  (75,0.888078)
+  (80,0.891203)
+  (85,0.891976)
+  (90,0.892937)
+  (95,0.893008)
+  (100,0.898195)
+  (105,0.899039)
+  (110,0.902219)
+  (115,0.899978)
+  (120,0.901776)
+  (125,0.901647)
+  (130,0.905039)
+  (135,0.899778)
+  (140,0.908492)
+  (145,0.905066)
+  (150,0.906713)
+  };
+  \addlegendentry{13 tests}
 
-%Starting test with 8
-%(5,0.455156)
-%(10,0.620105)
-%(15,0.700959)
-%(20,0.745575)
-%(25,0.774825)
-%(30,0.790016)
-%(35,0.803403)
-%(40,0.812852)
-%(45,0.826499)
-%(50,0.835003)
-%(55,0.837928)
-%(60,0.840413)
-%(65,0.841138)
-%(70,0.846428)
-%(75,0.848151)
-%(80,0.85363)
-%(85,0.853007)
-%(90,0.856371)
-%(95,0.857518)
-%(100,0.858881)
-%(105,0.861345)
-%(110,0.857811)
-%(115,0.865893)
-%(120,0.865168)
-%(125,0.861729)
-%(130,0.865707)
-%(135,0.862695)
-%(140,0.870416)
-%(145,0.866652)
-%(150,0.867423)
-%Starting test with 9
-%(5,0.488611)
-%(10,0.649876)
-%(15,0.724042)
-%(20,0.76488)
-%(25,0.789768)
-%(30,0.807459)
-%(35,0.819871)
-%(40,0.827699)
-%(45,0.838572)
-%(50,0.843236)
-%(55,0.851409)
-%(60,0.853273)
-%(65,0.858985)
-%(70,0.86166)
-%(75,0.862066)
-%(80,0.867132)
-%(85,0.861412)
-%(90,0.86384)
-%(95,0.864704)
-%(100,0.872822)
-%(105,0.869988)
-%(110,0.87266)
-%(115,0.874865)
-%(120,0.874463)
-%(125,0.876594)
-%(130,0.880322)
-%(135,0.876503)
-%(140,0.877519)
-%(145,0.881349)
-%(150,0.88105)
-%Starting test with 10
-%(5,0.520388)
-%(10,0.669885)
-%(15,0.73953)
-%(20,0.779234)
-%(25,0.807139)
-%(30,0.81853)
-%(35,0.831105)
-%(40,0.841473)
-%(45,0.846916)
-%(50,0.853759)
-%(55,0.85682)
-%(60,0.863666)
-%(65,0.867547)
-%(70,0.866015)
-%(75,0.87127)
-%(80,0.876509)
-%(85,0.879735)
-%(90,0.873673)
-%(95,0.883855)
-%(100,0.882149)
-%(105,0.879932)
-%(110,0.88022)
-%(115,0.882092)
-%(120,0.882542)
-%(125,0.886073)
-%(130,0.884312)
-%(135,0.890578)
-%(140,0.889372)
-%(145,0.888186)
-%(150,0.889946)
-%Starting test with 11
-%(5,0.539702)
-%(10,0.689876)
-%(15,0.754419)
-%(20,0.793475)
-%(25,0.812848)
-%(30,0.828437)
-%(35,0.84063)
-%(40,0.847733)
-%(45,0.858395)
-%(50,0.865242)
-%(55,0.869159)
-%(60,0.871521)
-%(65,0.871361)
-%(70,0.877042)
-%(75,0.879435)
-%(80,0.880008)
-%(85,0.883295)
-%(90,0.885611)
-%(95,0.886914)
-%(100,0.888524)
-%(105,0.887305)
-%(110,0.89099)
-%(115,0.889118)
-%(120,0.890359)
-%(125,0.890729)
-%(130,0.897019)
-%(135,0.893813)
-%(140,0.897917)
-%(145,0.899281)
-%(150,0.89439)
-%Starting test with 12
-%(5,0.554762)
-%(10,0.701209)
-%(15,0.763357)
-%(20,0.797581)
-%(25,0.817505)
-%(30,0.834899)
-%(35,0.848518)
-%(40,0.855628)
-%(45,0.860604)
-%(50,0.868656)
-%(55,0.867211)
-%(60,0.873718)
-%(65,0.879655)
-%(70,0.882888)
-%(75,0.885119)
-%(80,0.887547)
-%(85,0.890143)
-%(90,0.890705)
-%(95,0.892726)
-%(100,0.894182)
-%(105,0.891051)
-%(110,0.896253)
-%(115,0.895273)
-%(120,0.898981)
-%(125,0.899296)
-%(130,0.897772)
-%(135,0.900302)
-%(140,0.900423)
-%(145,0.899991)
-%(150,0.901546)
-%Starting test with 13
-%(5,0.571666)
-%(10,0.705516)
-%(15,0.768864)
-%(20,0.801934)
-%(25,0.821235)
-%(30,0.835033)
-%(35,0.849129)
-%(40,0.860822)
-%(45,0.863828)
-%(50,0.869423)
-%(55,0.876834)
-%(60,0.876493)
-%(65,0.886291)
-%(70,0.885457)
-%(75,0.888078)
-%(80,0.891203)
-%(85,0.891976)
-%(90,0.892937)
-%(95,0.893008)
-%(100,0.898195)
-%(105,0.899039)
-%(110,0.902219)
-%(115,0.899978)
-%(120,0.901776)
-%(125,0.901647)
-%(130,0.905039)
-%(135,0.899778)
-%(140,0.908492)
-%(145,0.905066)
-%(150,0.906713)
-
+  \end{axis}
+  \end{tikzpicture}
+  \caption{Ferns classifier evaluation}
+  \label{fig:ferns_classifier_evaluation}
+\end{figure}
