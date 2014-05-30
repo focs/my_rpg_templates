@@ -22,13 +22,13 @@ During the normal map building pipeline this image is computed and stored every 
 To evaluate the method the real distance between two frames is going to be compared with the Cross Correlation value described above. Far away frames should be dissimilar and close by frames should be more similar and have a lower CC value. In Figure~\ref{fig:real_distance_confusion_matrix} can be seen the pair distances between image using the real pose while in Figure~\ref{fig:CC_confusion_matrix} there is the approximated pair distances using the CC value as distance. It can be seen that they have a similar distribution. Also the correlation of 0.4337 shows numerically its relation.\\
 
 \begin{figure}
-  \begin{subfigure}[b]{0.60\linewidth}
+  \begin{subfigure}[b]{0.50\linewidth}
           \includegraphics[width=\linewidth]{img/demo_1_1_CC_real_similarity_matrix.eps}
           \caption{Image to image real distance between the keyframe pose}                
           \label{fig:real_distance_confusion_matrix}
   \end{subfigure}   
-  \qquad
-  \begin{subfigure}[b]{0.60\linewidth}
+  \quad
+  \begin{subfigure}[b]{0.50\linewidth}
          \includegraphics[width=\linewidth]{img/demo_1_1_CC_CC_similarity_matrix.eps}
          \caption{Image to image distance approximated using the Cross Correlation value}                
          \label{fig:CC_confusion_matrix}
@@ -37,7 +37,7 @@ To evaluate the method the real distance between two frames is going to be compa
 \end{figure}
 
 
-Finally, to show that this method can be used, for every image the most similar, in CC seance, image was taken being it actually the  $K$th closest image. Ideally the most similar image should always be the closest image. In Figure \ref{fig:K_closest} there is the count of occurrences of each $K$. It can be seen that most images resolve to the first or second closest image using this method.\\
+Finally, to show that this method can be used, for every image the most similar, in CC seance, image was taken being it actually the  $K$th closest image. Ideally the most similar image should always be the closest image. In Figure~\ref{fig:K_closest} there is the count of occurrences of each $K$. It can be seen that most images resolve to the first or second closest image using this method.\\
 
 \begin{figure}[!htbp]
   \centering
@@ -65,7 +65,7 @@ Finally, to show that this method can be used, for every image the most similar,
 \end{figure}
 
 
-In Figure \ref{fig:cc_example} demonstrates what the algorithm would return for a given query image for which there is no pose information available. Figure \ref{fig:query_1} is the image seen by the camera at the moment of the relocalization and \ref{fig:best_match_1} is what the system found to be the most similar, closest, image using the cross correlation procedure explained previously. In this case the to image's camera pose are not the same, but they should be similar enough in order to find the difference in posterior steps.\\
+In Figure~\ref{fig:cc_example} demonstrates what the algorithm would return for a given query image for which there is no pose information available. Figure~\ref{fig:query_1} is the image seen by the camera at the moment of the relocalization and~\ref{fig:best_match_1} is what the system found to be the most similar, closest, image using the cross correlation procedure explained previously. In this case the to image's camera pose are not the same, but they should be similar enough in order to find the difference in posterior steps.\\
 
 \subsection{Real Pose Finder}
 \label{sub:real_pose_finder}
@@ -307,9 +307,9 @@ The inliers found during the RANSAC process can be seen in~\ref{fig:3pt_inliers}
 \section{Using ferns}
 \label{sec:using_ferns}
 
-As said previously with the three-point algorithm it is possible to recover the 6 DoF of the camera pose from the relation from pixel coordinates and points in space. In this case machine learning techniques are used to model this relationship. In the classifier scheme, an object in space is a class and multiple views seen from the camera should all be classified as this class~\cite{}.\\
+As said previously with the three-point algorithm it is possible to recover the 6 DoF of the camera pose from the relation from pixel coordinates and points in space. In this case machine learning techniques are used to model this relationship. In the classifier scheme, an object in space is a class and multiple views seen from the camera should all be classified as this class.\\
 
-A \textit{fern} is a descriptor made from a set of binary tests such as~\ref{eq:fern_test}, build like random forests but flattened (no tree structure). When used as a classifier, every possible evaluation of a \textit{fern} will contain a posterior probability distribution for every class, like random forests' final leafs do.\\
+A \textit{fern}~\cite{Ozuysal2010} is a descriptor made from a set of binary tests such as~\ref{eq:fern_test}, build like random forests but flattened (no tree structure). When used as a classifier, every possible evaluation of a \textit{fern} will contain a posterior probability distribution for every class, like random forests' final leafs do.\\
 
 \begin{equation}
   f_j =
