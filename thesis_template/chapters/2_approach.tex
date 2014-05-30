@@ -188,7 +188,7 @@ What in~\cite{Baker2004} is referred as \textit{steepest descent} image~\ref{eq:
 \end{array}
 \end{equation}
 
-During the implementation, $\alpha$ is considered to be close to zero. This way the computation of the trigonometric functions is avoided.\\
+During the implementation, $\alpha$ is considered to be close to zero. This way the computation of the trigonometric functions is avoided. This method is first applied to the last level of the scale pyramid roughly aligning the images and then refined with upper levels (used top level is a configuration parameter). \\
 
 
 
@@ -390,7 +390,9 @@ During the training, every warped patch is evaluated with every \textit{fern}. T
   p_{k,c_i} = \frac{N_{k,c_i} + N_r}{N_{c_i} + K \times N_r}
 \end{equation}
 
-where $N_{k,c_i}$ is the number views of class $c_i$ that evaluates to $k$ and $N_{c_i}$ is the number of views of class $c_i$ to train. A regularization term $N_r = 1$ is used to avoid probabilities evaluating to zero.\\
+where $N_{k,c_i}$ is the number views of class $c_i$ that evaluates to $k$ and $N_{c_i}$ is the number of views of class $c_i$ to train. A regularization term $N_r = 1$ is used to avoid probabilities evaluating to zero. The implemented classifier sores $c_i$  and $N_{k,c_i}$, allowing online training by evaluating new incoming images and featured points.\\
+
+In the current implementation no online training is performed because training one frame is already computationally expensive and it cannot be done at every new keyframe from SVO without drastically lowering the amount of frames treated per second. Instead one global training is triggered manually when it cannot disturb the MAV's flight, for example when landed. Online training could be implemented on a different tread if the used board has unused cores.\\
 
 
 \subsubsection{Method Validation}

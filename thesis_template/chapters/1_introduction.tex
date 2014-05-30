@@ -1,4 +1,5 @@
 \chapter{Introduction}\label{sec:introduction}
+
 Micro Aerial Vehicles (MAVs) are about to play a major role in tasks like search and rescue, environment monitoring, security surveillance, inspection, goods delivery (Amazon), etc.  However, for such operations, navigating based on GPS information only is not sufficient. Fully autonomous operation in cities or other dense environments requires MAVs to fly at low altitudes where GPS signals are often shadowed or indoors, and to actively explore unknown environments while avoiding collisions and creating maps. Precisely autonomous operations requires MAVs to rely on alternative localization systems. For minimal weight, power consumption and budget a single camera can be used.\\
 
 Real-time monocular Visual Odometry (VO) algorithms can be used to estimate the 6 DoF pose of a camera relative to its surroundings. This is attractive for many applications such as mobile robotics (and not only aerial) and Augmented Reality (AR) because cameras are small and self-contained and therefore easy to attach to autonomous robots or AR displays. Further, they are cheap, and are now often pre-integrated into mobile computing devices such as PDAs, phones and laptops.\\
@@ -62,16 +63,45 @@ To train this method a very complete dataset of RGB-D images with 6 DoF poses fr
 
 SVO is an algorithm used to track the pose of a camera over time based on keyframes. It is divided in two main parts, on one side there is the creation and maintenance of a map, and on the other side, the motion estimation. \\
 
-The map consists of images, its pose and world frame points. World points are computed from featured points in the image. To find the depth of these points the following depth filter is used. When a point is first observed a possible depth distribution is initialized with a high uncertainty. This distribution is then updated in posterior observations of the same point in a Bayesian fashion. To find a point in a new image the patch around the point in reference frame it was found it taken and correlated along the epipolar line in the new image. The point whose patch has maximum correlation is taken as match. Once the uncertainty of the depth distribution is low enough, its accepted in the map and used in the tracking step.\\
+The map consists of images, its pose and world frame points. World points are computed from featured points in the image. To find the depth of these points the following depth filter is used. When a point is first observed a possible depth distribution is initialized with a high uncertainty. This distribution is then updated in posterior observations of the same point in a Bayesian fashion. This process is illustrated in~\ref{fig:depth_filter}.\\ 
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=10cm]{img/christian/vogiatzis.pdf}
+  \caption{SVO depth filter \cite{Forster2014}}
+  \label{fig:depth_filter}
+\end{figure}
+
+To find a point in a new image the patch around the point in reference frame it was found it taken and correlated along the epipolar line in the new image. The point whose patch has maximum correlation is taken as match. Once the uncertainty of the depth distribution is low enough, its accepted in the map and used in the tracking step.\\
 
 Featured points are only computed in keygrames and then tracked in the following frames. A new keyframe will be selected after a certain translation.\\
 
-To fond the pose of a new incoming frame the following steps are performed: first, a sparse image alignment over $SE(3)$ is performed between the new frame and the last one. That is, patches from featured points whose depth is know from the last frame are projected into the new frame. The difference between patches is an error function on the transformation that is then minimized using an iterative Gauss-Newton procedure.\\
+To find the pose of a new incoming frame the following steps are performed: first, a sparse image alignment~\ref{fig:svo_img_alig} over $SE(3)$ is performed between the new frame and the last one. That is, patches from featured points whose depth is know from the last frame are projected into the new frame. The difference between patches is an error function on the transformation that is then minimized using an iterative Gauss-Newton procedure.\\
 
-After this step a global pose of the frame is found. To improve the results not only the last frame should be used. All the points from the map, that are visible to the frame, are then projected on it straight from the keyframe where they were initially found and a similar alignment is performed. In this case, as the used frames might be farther away and the used patch is larger, an affine warp is applied to the patch. \\
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=10cm]{img/christian/sparse_img_alignment.pdf}
+  \caption{SVO sparse image alignment \cite{Forster2014}}
+  \label{fig:svo_img_alig}
+\end{figure}
 
-Finally, Bundle Adjustment is applied to the map to optimize the pose of keyframes and the 3D location of the world points.\\
+After this step a global pose of the frame is found. To improve the results not only the last frame should be used. All the points from the map, that are visible to the frame, are then projected on it straight from the keyframe where they were initially found and a similar alignment is performed as seen in~\ref{fig:svo_feature_align}. In this case, as the used frames might be farther away and the used patch is larger, an affine warp is applied to the patch. \\
 
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=10cm]{img/christian/feature_alignment.pdf}
+  \caption{SVO feature alignment \cite{Forster2014}}
+  \label{fig:svo_feature_align}
+\end{figure}
+
+Finally, Bundle Adjustment is applied to the map to optimize the pose of keyframes and the 3D location of the world points~\ref{fig:svo_global_optimization}.\\
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=10cm]{img/christian/pose_optimization.pdf}
+  \caption{SVO global optimization \cite{Forster2014}}
+  \label{fig:svo_global_optimization}
+\end{figure}
 
 \subsection{Interest point detection, descriptor extraction and matching}
 \label{ssub:interest_point_detection_descriptor_extraction_and_matching}
