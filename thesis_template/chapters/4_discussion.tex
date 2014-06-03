@@ -1,29 +1,29 @@
 \chapter{Discussion}\label{sec:discussion}
 
-One important part was missing in SVO, a good relocalization method which should recover the 6 DoF pose from only a map and a new frame. In this thesis different methods have been studied and implemented. First, as start point the method from PTAM has been implemented which is based on image alignment. During its development the Lucas-Kanard image alignment algorithm  and finally ESM has been implemented in C++ using OpenCV.\\
+This work has addressed an important part was missing in SVO, a good relocalization method which should recover the 6 DoF pose from only a map and a new frame. In this thesis different methods have been studied and implemented. First, as a starting point, the method from PTAM has been implemented which is based on image alignment. During its development the Lucas-Kanard image alignment algorithm  and finally ESM has been implemented in C++ using OpenCV library.\\
 
-Then, an alternative method based on the previous has been proposed. This method is based on space geometry and on the descriptor extraction and matching framework and uses the three-point algorithm to find the camera pose by relating some world points and pixel coordinates. This method produces very accurate results when matches are found between images and in general is a great improvement over the base line being more robust and accurate.\\
+Then, an alternative method based on the previous has been proposed. This method is based on space geometry and on the descriptor extraction and matching framework and uses the three-point algorithm to find the camera pose by relating some world points and pixel coordinates. This method produces very accurate results when matches are found between images and in general is a great improvement over the base line, being more robust and accurate.\\
 
 
-Finally new approach is proposed. The idea is to use machine learning techniques to characterise the appearance of some known points in space to later on be able to retrieve their position from the pixels of an image. \textit{Ferns} are very similar to Random Forests but simpler, easier to implement while being able to encode the same of information. A classifier based on \textit{ferns} have been implemented and the same time as integrated in a relocalizer.\\
+Finally a new approach is proposed. The central idea is to use machine learning techniques to characterise the appearance of some known points in space, to later be able to retrieve their position from the pixels of an image. \textit{Ferns} are very similar to Random Forests but simpler and easier to implement, while being able to encode the same of information. A classifier based on \textit{ferns} have been implemented and the same time as integrated in a relocalizer.\\
 
 This method has been found to give good results even in larger areas where more than 1700 classes need to be classified even though a simplified version of the training was used.\\
 
-Along with this, the development of a relocalization framework has been carried on with the goal of being independent and to be usable by any Visual Odometry or vision based SLAM algorithm although it has been developed to be used SVO. It has been developed as a ROS package to ease its usage with other projects despite it has no dependence on it.\\
+Along with this, the development of a relocalization framework has been carried on with the goal of being independent and usable by any Visual Odometry or vision based SLAM algorithm, although it has been developed to be used SVO. Furthermore, it has been developed as a ROS package in order to facilitat the integration in other robotic applications.\\
 
 
 \section{Future Work}\label{sec:future_work}
 
-There are several thing that could be further worked on and improve to solve the proposed problem as only a few have been studied here. Next there are some thoughts and ideas about what could or should be done next.\\
+There are several aspects that could be further improved to solve the proposed problem, as only a few have been studied here. Next, some are presented and discussed on what could or should be done next.\\
 
-As seen in the experiments section~\ref{sec:discussion} the weak point of the Multi Relocalizer at this point is the used \textit{Place Recognition}, it is basic, not robust to rotations and does not scale well with the number of used frames. New methods should be developed next based, for instance, on image retrieval or image classification techniques. For example using bag of words. \\
+As seen in the experiments section~\ref{sec:discussion} the weak point of the Multi Relocalizer at this point is the used \textit{Place Recognition}, which is not robust to rotations and does not scale well with the number of used frames. New methods should be developed next based, for instance, on image retrieval or image classification techniques, for example using bag of words~\cite{yang2007evaluating}. \\
 
-The used classifier is said to not handle many classes, one step to reduce them could  be to filter  the not very characteristic classes as these might only introduce confusion to the model. Or an other option would be to work locally instead of globally with the whole map only keeping information from the last $k$ frames.\\
+The used classifier is said to not handle many classes. One step to reduce this number could  be to filter  the not very characteristic classes as these might only introduce confusion to the model. An other option would be to work locally instead of globally with the whole map only keeping information from the last $k$ frames.\\
 
-In the original work on which our work have been based~\cite{Ozuysal2010} a more intensive training is carried on. In that case more complex random affine warps are used instead of only rotation and scale and also noise and blur are introduced. Trying to apply those could be some further work to be done.\\
+In the original work on which our work have been based~\cite{Ozuysal2010} a more intensive training is carried on. In that case more complex random affine warps are used, instead of only rotation and scale, also noise and bluriness are introduced. Trying to apply those could be some further work to be done.\\
 
 Also other classifiers could be used or some point encoding which could maximize the used information. For example apply the classifier on the point's SIFT descriptor instead than on the surrounding patch.\\
 
-Finally, it should be taken into account that, even though the camera is calibrated, non of the used images are rectified to avoid computation time (pixel positions used three-point algorithm are corrected with the camera calibration). But, the uncorrected distortion, which can be clearly seen in the example images through out the this document, might cause problems on the image alignment, on the extracted descriptors and on the patches used to train the classifier. The effect of this distortion should be tested and quantified and also corrected if needed.\\
+Finally, it should be taken into account that, even though the camera is calibrated, none of the used images are rectified to save computation time (pixel positions used three-point algorithm are corrected with the camera calibration). But, the uncorrected distortion, which can be clearly seen in the example images through out the this document, can cause problems on the image alignment, on the extracted descriptors and on the patches used to train the classifier. The effect of this distortion should be tested and quantified and  corrected if needed.\\
 
 

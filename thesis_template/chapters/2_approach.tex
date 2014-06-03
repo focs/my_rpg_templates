@@ -1,25 +1,30 @@
 \chapter{Approach}\label{sec:approach}
 
-We propose two different approaches to relocalization: first, a local approaches based on the PTAM implementation, where two steps are performed. The first step has been named \textit{Place Finder} and the second \textit{Real Pose Recognition}. Multiple methods will be proposed to solve the second step. Then, on the other side, a global approach will be proposed. In this case machine learning methods (\textit{ferns}) will be used to recognize points in space.
+We propose two different approaches to address the relocalization proble. First, a local approache is based on the PTAM implementation, where two steps are performed. The first step has been named \textit{Place Finder} and the second \textit{Real Pose Recognition}. Multiple methods will be proposed to solve the second step. Then, on the other side, a global approach will be proposed. In this case machine learning methods (\textit{ferns}) will be used to recognize points in space.
 
 \section{PTAM method}
 \label{sec:ptam_method}
 
-PTAM~\cite{KleinMurray2007} is a VO algorithm based on keyframes and so the relocalization method proposed is based on keyframes as well. Every keyframe has associated with a camera pose that will be used to relocalize. During the relocalization there are two steps involved. We called the first step \textit{Place Finder} and the second \textit{Real Pose Finder}.
+PTAM~\cite{KleinMurray2007} is a VO algorithm based on keyframes and so the relocalization method proposed is based on keyframes as well. Every keyframe is associated with a camera pose that will be used to relocalize. During the relocalization there are two steps involved. We called the first step \textit{Place Finder} and the second \textit{Real Pose Finder}.
 
 \subsection{Place Finder}
 \label{ssub:place_recognition}
 
-During this step, the algorithm tries to find the keyframe image most similar to the last acquired image. The pose associated with the most similar keyframe is used as an initial rough estimation of the current pose. The similarity score should be resistant to view point because the new acquired image will, most probably, never be taken from the same pose as any of the keyframes. Also it should be fast to compute.\\
+During this step, the algorithm tries to find the keyframe image most similar to the last acquired image. The pose associated with the most similar keyframe is used as an initial rough estimation of the current pose. The similarity score should be invariant to small view point changes because the new acquired image will, most probably, never be taken from the same pose as any of the keyframes. Also it should be fast to compute.\\
 
-The used similarity score is the Cross Correlation between images meaning the sum of the squared error between two zero-mean images. To make to computation faster both images are resized become $40\times30$. Then, to make the images more resistant to view point changes it is blurred with a $3\times3$ Gaussian kernel with $\sigma=2.5$. The resulting image is a resized, blurred and zero-mean image called \textit{small-blurry-image}.\\
+The used similarity score is the Cross Correlation between images meaning the sum of the squared error between two zero-mean images as in~\ref{eq:CC}. To make to computation faster both images are resized become $40\times30$. Then, to make the images more resistant to view point changes it is blurred with a $3\times3$ Gaussian kernel with $\sigma=2.5$. The resulting image is a resized, blurred and zero-mean image called \textit{small-blurry-image}.\\
 
-During the normal map building pipeline this image is computed and stored every time a new keyframe is added to the map. And then, during the relocalization, the sum of squared difference between every stored \textit{small-blurry-image} and the last acquired frame is computed, the corss correlation measure, to find the most similar keyframe, which is then use its pose as an initial estimation of the current camera pose.\\
+\begin{equation}
+  d_{CC} = \sum_{x,y} [(I(x,y) - \bar{I}) - (G(x,y) - \bar{G})]^2
+  \label{eq:CC}
+\end{equation}
+
+During the normal map building pipeline this image is computed and stored every time a new keyframe is added to the map. And then, during the relocalization, the sum of squared difference between every stored \textit{small-blurry-image} and the last acquired frame is computed,  to find the most similar keyframe, which is then use its pose as an initial estimation of the current camera pose.\\
 
 \subsubsection{Method validation}
 \label{ssub:cc_method_validation}
 
-To evaluate the method the real distance between two frames is going to be compared with the Cross Correlation value described above. Far away frames should be dissimilar and close by frames should be more similar and have a lower CC value. In Figure~\ref{fig:real_distance_confusion_matrix} can be seen the pair distances between image using the real pose while in Figure~\ref{fig:CC_confusion_matrix} there is the approximated pair distances using the CC value as distance. It can be seen that they have a similar distribution. Also the correlation of 0.4337 shows numerically its relation.\\
+To evaluate the method the real distance between two frames, distance between camera centres in 3D space, is going to be compared with the Cross Correlation value described above. Far away frames should be dissimilar and close by frames should be more similar and have a lower CC value. In Figure~\ref{fig:real_distance_confusion_matrix} can be seen the pair distances between image using the real pose while in Figure~\ref{fig:CC_confusion_matrix} there is the approximated pair distances using the CC value as distance. It can be seen that they have a similar distribution.\\
 
 \begin{figure}
   \begin{subfigure}[b]{0.50\linewidth}
@@ -37,7 +42,7 @@ To evaluate the method the real distance between two frames is going to be compa
 \end{figure}
 
 
-Finally, to show that this method can be used, for every image the most similar, in CC seance, image was taken being it actually the  $K$th closest image. Ideally the most similar image should always be the closest image. In Figure~\ref{fig:K_closest} there is the count of occurrences of each $K$. It can be seen that most images resolve to the first or second closest image using this method.\\
+Finally, to show that this method can be used, for every image the most similar, in CC seance, was taken being it actually the  $K$th closest image. Ideally the most similar image should always be the closest image. In Figure~\ref{fig:K_closest} there is the count of occurrences of each $K$. It can be seen that most images resolve to the first or second closest image using this method.\\
 
 \begin{figure}[!htbp]
   \centering
@@ -65,12 +70,12 @@ Finally, to show that this method can be used, for every image the most similar,
 \end{figure}
 
 
-In Figure~\ref{fig:cc_example} demonstrates what the algorithm would return for a given query image for which there is no pose information available. Figure~\ref{fig:query_1} is the image seen by the camera at the moment of the relocalization and~\ref{fig:best_match_1} is what the system found to be the most similar, closest, image using the cross correlation procedure explained previously. In this case the to image's camera pose are not the same, but they should be similar enough in order to find the difference in posterior steps.\\
+In Figure~\ref{fig:cc_example} demonstrates what the algorithm would return for a given query image for which there is no pose information available. Figure~\ref{fig:query_1} is the image seen by the camera at the moment of the relocalization and~\ref{fig:best_match_1} is what the system found to be the most similar, closest, image using the cross correlation procedure explained previously. In this case the two camera poses are not exactly the same, but they should be similar enough in order to find the lose difference in posterior steps.\\
 
 \subsection{Real Pose Finder}
 \label{sub:real_pose_finder}
 
-The second step of the relocalization algorithm from PTAM tries to refine the pose of the found to be most similar keyframe to explain the current pose of the camera. During this step, in the implementation from PTAM, only rotations are corrected. An image alignment through optimization algorithm (ESM~\cite{lovegrove2012parametric}) is used to find the $SE(2)$ transformation between the two and then an other minimization is performed to find a transformation in the world frame.\\
+The second step of the PTAM relocalization algorithm found, in order to refine the pose of the most similar keyframe to explain the current pose of the camera. During this step, in the implementation from PTAM, only rotations are corrected. An image alignment through optimization algorithm (ESM~\cite{lovegrove2012parametric}) is used to find the $SE(2)$ transformation between the two, followed by a minimization to find a transformation in the world frame.\\
 
 \subsubsection{Image alignment}
 \label{ssub:image_alignment}
@@ -80,10 +85,10 @@ The Extended Second order Minimization algorithm (ESM) is based on the algorithm
 With this goal an error function is defined on which the Gauss-Newton or Levenberg-Marquardt schemes can be applied. The error is the squared difference between the template image and the warped input image
 
 \begin{equation}
-  \sum_x [I(W(x;p)) - T(x)]^2
+  e = \sum_x [I(W(x;p)) - T(x)]^2
 \end{equation}
 
-The warping function is going to be in $SE(2)$, that is, translation and rotation of the image.
+The warping function is going to be in $SE(2)$, that is, translation and rotation of the image plane.
 
 \begin{equation}
   W(x;p) = 
@@ -106,7 +111,7 @@ where $p = \begin{pmatrix} \alpha , t_x , t_y \end{pmatrix}$ are the $SE(2)$ par
   The algorithm assumes that a current estimate of $p$ exists and iteratively tries improves it by increments $\Delta p$. On every  iteration equation~\ref{eq:delta_error} is solved on $\Delta p$ and then it is used to update $p$ as in~\ref{eq:p_update}
 
 \begin{equation}
-  \sum_x [I(W(x;p + \Delta p)) - T(x)]^2
+  \min_{\Delta p}  \sum_x [I(W(x;p + \Delta p)) - T(x)]^2
   \label{eq:delta_error}
 \end{equation}
 
@@ -188,7 +193,7 @@ What in~\cite{Baker2004} is referred as \textit{steepest descent} image~\ref{eq:
 \end{array}
 \end{equation}
 
-During the implementation, $\alpha$ is considered to be close to zero. This way the computation of the trigonometric functions is avoided. This method is first applied to the last level of the scale pyramid roughly aligning the images and then refined with upper levels (used top level is a configuration parameter). \\
+During the implementation, $\alpha$ is considered to be close to zero. This way the computation of the trigonometric functions is avoided to save computational time. This method is first applied to the last level of the scale pyramid roughly aligning the images and then refined with upper levels (used top level is a configuration parameter). \\
 
 
 
@@ -198,7 +203,7 @@ During the implementation, $\alpha$ is considered to be close to zero. This way 
 \subsubsection{World frame interpretation}
 \label{ssub:world_frame_interpretation}
 
-This transformation is not easily interpreted in $SE(3)$, a translation in pixels can mean different things in the world frame depending on the distance to the object. Also, in $SE(3)$ there are three angular degrees of freedom, only. The found transformation can be interpreted in multiple ways in the world frame. In the PTAM implementation it is assumed that the translation will only involve rotations, and so, the next step is the mapping from $SE(2)$ to $SO(3)$. This final found transformation, only including rotations, will actually translate the frame pose because this rotation is not, probability, applied from the origin.\\
+This transformation is not easily interpreted in $SE(3)$ (6 DoF including three degrees of translation and three degrees of rotation $SO(3)$), since a translation in pixels can mean different things in the world frame depending on the distance to the object. Also, in $SE(3)$ there are three angular degrees of freedom. The found transformation can be interpreted in multiple ways in the world frame. In the PTAM implementation it is assumed that the translation will only involve rotations, and so, the next step is the mapping from $SE(2)$ to $SO(3)$ (world frame rotations). The found rotations will be applied form the closes frame pose which in most cases is not in the origin of the frame. A pure rotational transformation applied on a pose not set in the origin will effect on its position as well, introducing translation.\\
 
 A Gauss-Newton minimization algorithm is used to find the $SO(3)$ model that modifies the image in the same way as the found $SE(2)$ model. The minimization is over the $SO(3)$ parameters $\xi$ and the error is expressed as in~\ref{equ:so3_error}
 
@@ -234,7 +239,7 @@ with
 \subsubsection{Method validation}
 \label{ssub:esm_method_validation}
 
-To visualize the results of the different optimization procedures described above, the found transformation has been applied to the image. In the first step, the $SE(2)$ transformation between two image is computed and the transformed image at every step is one of the used variables. In Figure~\ref{fig:se2_transformation_1} can be seen the final transformation found from~\ref{fig:best_match_1} to~\ref{fig:query_1}. In Figure~\ref{fig:se3_error_1} the error of the overplayed images is visualized, there it can be seen that translation and rotation are well corrected but there still is a misalignment caused mostly by a change on scale which is not taken into account during the alignment.\\
+To visualize the results of the different optimization procedures described above, the found transformation has been applied to the image. In the first step, the $SE(2)$ transformation between two image is computed and the transformed image at every step is one of the used variables. In Figure~\ref{fig:se2_transformation_1} can be seen the final transformation found from~\ref{fig:best_match_1} to~\ref{fig:query_1}. In Figure~\ref{fig:se3_error_1} the error of the overlapped images is visualized. It can be seen that translation and rotation are well corrected but there still is a misalignment caused mostly by a change on scale which is not taken into account during the alignment.\\
 
 \begin{figure}[htpb]
   \centering
@@ -243,7 +248,7 @@ To visualize the results of the different optimization procedures described abov
   \label{fig:se2_transformation_1}
 \end{figure}
 
-On the other side, during the second minimization where a $SO(3)$ translation is found, no image is actually involved, only two pixel coordinates. To generate a visualization of the translation the calibration of image unit plane. Every pixel is unprojected form the image into the image plane, then the transformation is applied to it and finally it is projected back to the image. The result of the described procedure can be seen in Figure~\ref{fig:so3_transformation_1}.\\
+On the other side, during the second minimization where a $SO(3)$ translation is found, no image is actually involved, only two pixel coordinates. To generate a visualization of the translation the calibration of image unit plane, every pixel is unprojected form the image to the image plane, then the transformation is applied to its position and finally it is projected again to the image. The result of the described procedure can be seen in Figure~\ref{fig:so3_transformation_1}.\\
 
 \begin{figure}[htpb]
   \centering
@@ -263,18 +268,18 @@ On the other side, during the second minimization where a $SO(3)$ translation is
 \subsection{Real Pose Finder Alternative}
 \label{sub:real_pose_finder_alternative}
 
-During the mapping of an area the VO algorithm finds landmarks in the world frame which are associated with detected featured points in keyframes (i.e. every featured point in an image is related to a $3D$ position in the world frame). Given a new image, some extracted featured points can be related to a keyframe using descriptor-matching which at the same time are related to world positions. From this information the full 6 DoF translation $SE(3)$ can be computed using the prospective three-point algorithm (P3P).\\
+During the mapping of an area, the VO algorithm finds landmarks in the world frame which are associated with detected featured points in keyframes (i.e. every featured point in an image is related to a $3D$ position in the world frame). Given a new image, some extracted featured points can be related to a keyframe using descriptor-matching which at the same time are related to world positions. From this information the full 6 DoF translation $SE(3)$ can be computed using the prospective three-point algorithm (P3P).\\
 
-The 3pt algorithm and its implementation is described in \cite{kneipopengv}. In this case the described \textit{Central absolute pose} is used.
+The three-point algorithm and its implementation is described in \cite{kneipopengv}. In our case the described \textit{Central absolute pose} is used.
 
 \begin{figure}[htpb]
   \centering
   \includegraphics[width=0.6\linewidth]{img/absolute_central.png}
-  \caption{From camera frame vectors $f$ (or image pixels if the camera calibration is available) and fix points $p$ the transformation between the two coordinate frames can be computed using the 3pt algorithm. Image from \cite{kneipopengv}}
+  \caption{From camera frame vectors $f$ (or image pixels if the camera calibration is available) and fix points $p$ the transformation between the two coordinate frames can be computed using the P3P algorithm. Image taken from \cite{kneipopengv}}
   \label{fig:img/absolute_centra}
 \end{figure}
 
-First, descriptors from every featured point are extracted (both SIFT and SURF can be used updating a configuration file, but in the experiments SIFT will be used). Second, a brute force KNN matching is performed from all the extracted descriptors from on image and all the descriptors of the second image. The first, and second most similar descriptor are retrieved. Then, only good matches are kept, that is, using the matching technique described by Lowe~\cite{lowe2004distinctive}, only matches with a descriptor ratio between the first and the second closest match of 0.8 or less are kept, only discriminant matches are used.\\
+First, descriptors from every featured point are extracted (both SIFT and SURF can be used updating a configuration file, but in the experiments only SIFT is used). Second, a brute force KNN matching is performed from all the extracted descriptors from on image and all the descriptors of the second image. The first, and second most similar descriptor are retrieved. Then, only good matches are kept, that is, using the matching technique described by Lowe~\cite{lowe2004distinctive}, only matches with a descriptor ratio between the first and the second closest match of 0.8 or less are kept, only discriminant matches are used.\\
 
 Finally, the three-point algorithm is fed with the pixel positions from the query image and the landmarks from the other. Because there are still outliers after the described simple filtering, this process is run in RANSAC~\cite{fischler1981random} framework. \\
 
@@ -282,11 +287,11 @@ Finally, the three-point algorithm is fed with the pixel positions from the quer
 \subsubsection{Method validation}
 \label{ssub:3pt_method_validation}
 
-Figures~\ref{fig:3pt_matches} and~\ref{fig:3pt_inliers} are an example of the described above. The pose outputted was used to successfully relocalize in SVO.\\
+Figures~\ref{fig:3pt_matches} and~\ref{fig:3pt_inliers} are an example of the described above. The pose output was used to successfully relocalize in SVO.\\
 
 The first part, where descriptors are extracted, matches and filtered, can be seen in Figure~\ref{fig:3pt_matches}.  It can be seen that most matches are correct after this first filtering.\\
 
-The inliers found during the RANSAC process can be seen in~\ref{fig:3pt_inliers}. One has to keep in mind that the model which is fitted  is not from image to image but from world frame, using world points, to camera frame. These world points can not be visualized, only image points, and its precision could lead to not be considered. So some matches which seem right in the image might not be used to calculate the transformation.\\
+The inliers found during the RANSAC process can be seen in~\ref{fig:3pt_inliers}. One has to keep in mind that the model which is fitted  is not from image to image but from world frame, using world points, to camera frame points (projections). These world points can not be  easily visualized on the image but only its projection. For this reason matches, that might look correct, are not used as inliers because its 3D point might be wrong or inaccurate not fitting the model. \\
 
 \begin{figure}[htpb]
   \centering
@@ -322,7 +327,7 @@ A \textit{fern}~\cite{Ozuysal2010} is a descriptor made from a set of binary tes
   \label{eq:fern_test}
 \end{equation}
 
-The result of the tests is encoded into the bits of an unsigned integer like done in~\ref{lst:fern_evaluation}. If a \textit{fern} has $S$ tests then its representation can have $K=2^{S}$ possible values which are then used  as index of its posterior distribution.\\
+The result of the tests is encoded into the bits of an unsigned integer as is it shown in Listing~\ref{lst:fern_evaluation}. If a \textit{fern} has $S$ tests then its representation can have $K=2^{S}$ possible values which are then used  as index of its posterior distribution.\\
 
 \lstset{language=C++,numbers=none,caption=Fern evaluation, label=lst:fern_evaluation}
 \begin{lstlisting}[frame=lines]
@@ -339,7 +344,7 @@ for (size_t j = 0; j < S; ++j)
 }
 \end{lstlisting}
 
-One \testit{fern} is usually not descriptive enough to correctly classify, in \cite{Ozuysal2010} it is claimed that with 50 \testit{ferns} and $S=11$ a problem with 200 different classes is tractable. In memory, it would involve $50\times2^{11}\times200 = 20480000$ elements to be stored in memory. If these are stored as \textit{float} then 78 MB are needed, which is tractable. It should be noticed that the problem does not scale well on $S$, but at the same time, it is the most critic parameter.\\
+One \testit{fern} is usually not descriptive enough to correctly classify. In \cite{Ozuysal2010} it is claimed that with 50 \testit{ferns} and $S=11$ a problem with 200 different classes is tractable. Regarding storage requirements, it would involve $50\times2^{11}\times200 = 20480000$ elements to be stored in memory. If these are stored as \textit{float} then 78 MB are needed, which is tractable. It should be noticed that the problem does not scale well with the number of tests $S$, but at the same time, it is the most critic parameter as illustrated in the next subsection.\\
 
 
 \subsection{Seminaive Bayesian Approach}
@@ -363,24 +368,24 @@ Assuming a uniform prior and since the denominator is a scaling factor the probl
   \^c_i = \underset{c_i}{\text{argmax}} \quad P(f_1, f_2, \ldots, f_N | C = c_i)
 \end{equation}
 
-Since these tests are very simple, many of them are needed ($N \approx 300$), the storage of joint probabilities for every outcome is no feasible because $2^N$ entries for each class would be required. One way to avoid this storage is to assume total independence between tests, this way the class probability distributions can be calculated like
+Since these tests are very simple, many of them are needed ($N \approx 300$), the storage of joint probabilities for every outcome is not feasible because $2^N$ entries for each class would be required. One way to avoid this storage issue is to assume total independence between tests. This way the class probability distributions can be calculated as
 
 \begin{equation}
   P(f_1, f_2, \ldots, f_N | C = c_i) = \prod^{N}_{j=1}P(f_j | C = c_i)
 \end{equation}
 
-but this ignores the possible correlation between tests. With \testit{ferns} a trade off is achieved, tests are grouped in sets $F$ and then the conditional probability becomes
+However this ignores the possible correlation between tests. With \testit{ferns} a trade off is achieved, since the tests are grouped in sets $F$ and then the conditional probability becomes
 
 \begin{equation}
   P(f_1, f_2, \ldots, f_N | C = c_i) = \prod^{M}_{k=1} P(F_k | C = c_i)
 \end{equation}
 
-It can be seen here why $S$ is important, an increment in the number of tests in a \textit{fern} means an increment in the modelled correlation.\\
+It can be seen here why $S$ is important. An increment in the number of tests in a \textit{fern} means an increment in the modelled correlation.\\
 
 \subsection{Training}
 \label{sub:training}
 
-During the training step many different views of a world point are needed to correctly model it. In the original work \cite{Ozuysal2010} only one image is used to train and to generate more possible views of the objects multiple (about 10,000) randomly generated warps are applied to it, all this warped images are used for training. Those warps include affine transformations, noise addition and smoothing with a Gaussian kernel (with all the parameters randomly picked from a uniform distribution).\\
+During the training step many different views of a world point are needed to correctly model it. In the original work by Ozuysal and Calonder~\cite{Ozuysal2010} only one image is used to train. To generate more possible views of the objects, multiple (about 10,000) randomly generated warps are applied to it. All these warped images are used for training. Those warps include affine transformations, noise addition and smoothing with a Gaussian kernel (with all the parameters randomly picked from a uniform distribution).\\
 
 In the studied case here, the algorithm can already provide multiple real views of the object (around 5-10), but still on each patch many randomly generated warps are applied and used to train (usually 100). In this case, the warps are simplified to include only image rotation and scale.\\
 
@@ -390,9 +395,9 @@ During the training, every warped patch is evaluated with every \textit{fern}. T
   p_{k,c_i} = \frac{N_{k,c_i} + N_r}{N_{c_i} + K \times N_r}
 \end{equation}
 
-where $N_{k,c_i}$ is the number views of class $c_i$ that evaluates to $k$ and $N_{c_i}$ is the number of views of class $c_i$ to train. A regularization term $N_r = 1$ is used to avoid probabilities evaluating to zero. The implemented classifier sores $c_i$  and $N_{k,c_i}$, allowing online training by evaluating new incoming images and featured points.\\
+where $N_{k,c_i}$ is the number views of class $c_i$ that evaluates to $k$ and $N_{c_i}$ is the number of views of class $c_i$ to train. A regularization term $N_r$ is used to overcome untrained situations that would would evaluate to 0 probability. In the original work different regularization terms $N_r$ are tested all leading to similar results, they conclude that its value is not important but it presence is, it is usually set to 1. The implemented classifier sores $c_i$  and $N_{k,c_i}$, allowing online training by evaluating new incoming images and featured points.\\
 
-In the current implementation no online training is performed because training one frame is already computationally expensive and it cannot be done at every new keyframe from SVO without drastically lowering the amount of frames treated per second. Instead one global training is triggered manually when it cannot disturb the MAV's flight, for example when landed. Online training could be implemented on a different tread if the used board has unused cores.\\
+In the current implementation, no online training is performed because training one frame is already computationally expensive, and it cannot be done at every new keyframe from SVO without drastically lowering the amount of frames treated per second. Instead, one global training is triggered manually when it cannot disturb the MAV's flight, for example when landed. Online training could be implemented on a different thread if the processor used  had unused cores.\\
 
 
 \subsubsection{Method Validation}
@@ -632,4 +637,4 @@ To validate the classifier a small test has been set up. One image is taken and 
   \label{fig:ferns_classifier_evaluation}
 \end{figure}
 
-It can be seen that a minimum number of \textit{ferns} is needed to achieve the best performance for a given number of tests, between 50 and. After that, more tests cannot improve the results. On the other side, it can be seen that incrementing the number of tests per \textit{fern} can give a qualitative jump, even with only one test. As said before, the number of tests $S$ is an important parameter, but it is very limited by memory.\\
+It can be seen that a minimum number of \textit{ferns} is needed to achieve the best performance for a given number of tests, between 50 and 80. After that, more tests cannot improve the results. On the other side, it can be seen that incrementing the number of tests per \textit{fern} can give a qualitative jump, even with only one test. As said before, the number of tests $S$ is an important parameter, but it is very limited by the available memory.\\

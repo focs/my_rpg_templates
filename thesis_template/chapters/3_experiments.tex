@@ -1,14 +1,16 @@
 \chapter{Experiments}\label{sec:experiments}
 
-Here all the described algorithms are going to be applied to different datasets. As described, the Multi Relocalizer consists of two parts \textit{Place Finder} and \textit{Real Pose Finder}, both parts will be analysed independently and finally together. Then, the global method using \textit{ferns} will be analysed.\\
+Discussion and details about the software implementation can be found in Appendix~\ref{cha:design_and_implementation}.\\
 
-Measures are in SVO metric which is initialized when the program starts, it should be approximated to meters. Errors should be considered as relative to other solutions and not as absolute.\\
+Here all the described algorithms are going to be applied to different datasets. As described, the Multi Relocalizer consists of two parts \textit{Place Finder} and \textit{Real Pose Finder}. Both parts will be analysed independently and finally together. Then, the global method using \textit{ferns} will be analysed.\\
+
+The SVO frame is initialized with with the algorithm with the first few frames. A initial known depth is taken from the configuration and used to find the transformation between the two first frames. This known depth might not relate completely with reality leading to a non standard space metric (poses are not in meters). The following results and its errors are in this metric and should be considered as relative to other solutions and not as absolute.\\
 
 \section{Desktop dataset}
 
 The first used dataset has been captured on a desktop. The first part of the dataset will be used for training the relocalizer while the second part will be used for testing. From both parts the pose is known. It will be used, not only to visualize the error as ground truth, but also in the \textit{naive Place Finder} described later.\\
 
-In figure~\ref{fig:desktop_2_train_test} both the training and testing data can be seen together, where every set contains 10 images that cover a space of about 2 square meters. It should be noted that the data does not coincide, only using closest frame will not yell good results, and so the \textit{Real Pose Finder} step is very important. In~\ref{fig:desktop_2_example_image} there is an example of the images in the dataset.\\
+In figure~\ref{fig:desktop_2_train_test} both the training and testing data can be seen together, where every set contains 10 images that cover a space of about 2 square meters. It should be noted that the training and the testing frames do not share positions. Using only closest frame will not yield good results, and so the \textit{Real Pose Finder} step is very important. In~\ref{fig:desktop_2_example_image} there is an example of the images in the dataset.\\
 
 \begin{figure}[htpb]
   \begin{subfigure}[b]{6cm}
@@ -42,18 +44,18 @@ To analyse the performance of the different \textit{Real Pose Finder} methods a 
   \qquad
   \begin{subfigure}[b]{6cm}
          \includegraphics[width=\linewidth]{img/desktop_2_naive_empty_dist_1.png}
-         \caption{Translation error histogram, mean in red}                
+         \caption{Translation error histogram, with the mean marked as a red line}                
          \label{fig:desktop_2_naive_empty_dist_1}
   \end{subfigure}
   \caption{Results using the Naive \textit{Place Finder} an no \textit{Real Pose Finder}}
 \end{figure}
 
-To evaluate the results in a numeric way a histogram of the translation error have been plotted in~\ref{fig:desktop_2_naive_empty_dist_1}, it is going to be used as a baseline to see how posterior methods can improve it.\\
+To evaluate the results in a numeric way, a histogram of the translation error have been plotted in~\ref{fig:desktop_2_naive_empty_dist_1} and is going to be used as a baseline to see how posterior methods can improve it.\\
 
 \subsubsection{Cross Covariance \textit{Place Finder}}
 \label{ssub:cross_covariance_place_finder}
 
-As said, the naive approach is the optimal \textit{Place Finder}, this implementation is not as good but would like it to be as close as possible. Looking at the error histogram~\ref{fig:desktop_2_CC_empty_dist_1} it can be seen that the mean error is higher but int general the results are similar, if the naive approach can be corrected this method should also be corrected. This error is used as a baseline to see how the results can be improved.\\
+As said, the naive approach is the optimal \textit{Place Finder}. This implementation should be as close as possible to naive. Looking at the error histogram~\ref{fig:desktop_2_CC_empty_dist_1} it can be seen that the mean error is higher but in general the results are similar. If the naive approach can be corrected with the second step, this method should also be corrected. This error is used as a baseline to see how the results can be improved.\\
 
 \begin{figure}[htpb]
   \begin{subfigure}[b]{6cm}
@@ -64,7 +66,7 @@ As said, the naive approach is the optimal \textit{Place Finder}, this implement
   \qquad
   \begin{subfigure}[b]{6cm}
          \includegraphics[width=\linewidth]{img/desktop_2_CC_empty_dist_1.png}
-         \caption{Translation error histogram, mean in red} 
+         \caption{Translation error histogram, with the mean marked as a red line}                
          \label{fig:desktop_2_CC_empty_dist_1}
   \end{subfigure}
   \caption{Results using Cross Covariance \textit{Place Finder} and no \textit{Real Pose Finder}}
@@ -73,7 +75,7 @@ As said, the naive approach is the optimal \textit{Place Finder}, this implement
 \subsubsection{Extended Second-other Minimization \textit{Real Pose Finder}}
 \label{ssub:extended_second_orther_minimization_textit_real_pose_finder}
 
-This is the method used in PTAM. First, the method has been applied together with the naive \textit{Place Finder} and the with CC. Although the found paths in \ref{fig:desktop_2_naive_esm_path_1} and~\ref{fig:desktop_2_CC_esm_path_1} are not easily evaluated visually, looking at~\ref{fig:desktop_2_naive_esm_dist_1} and~\ref{fig:desktop_2_CC_esm_dist_1} and comparing them to their corresponding baseline previously mentioned, it can be seen that in both cases the results improve.\\
+This is the method used in PTAM. First, it has been applied together with the naive \textit{Place Finder} and then with cross correlation. Although the found paths in \ref{fig:desktop_2_naive_esm_path_1} and~\ref{fig:desktop_2_CC_esm_path_1} are not easily evaluated visually, looking at~\ref{fig:desktop_2_naive_esm_dist_1} and~\ref{fig:desktop_2_CC_esm_dist_1} and comparing them to their corresponding baseline previously mentioned, it can be seen that in both cases the results improve.\\
 
 The algorithm performs better with the mentioned ideal \textit{Place Finder}, so alternative and more accurate implementations should be considered to improve the results of this \textit{Real Pose Finder}.\\
 
@@ -87,7 +89,7 @@ The algorithm performs better with the mentioned ideal \textit{Place Finder}, so
   \qquad
   \begin{subfigure}[b]{6cm}
           \includegraphics[width=\linewidth]{img/desktop_2_naive_esm_dist_1.png}
-          \caption{Translation error histogram, mean in red} 
+          \caption{Translation error histogram, with the mean marked as a red line}                
           \label{fig:desktop_2_naive_esm_dist_1}
   \end{subfigure}
   \caption{Results using Naive \textit{Place Finder} and ESM  \textit{Real Pose Finder}}
@@ -103,7 +105,7 @@ The algorithm performs better with the mentioned ideal \textit{Place Finder}, so
   \qquad
   \begin{subfigure}[b]{6cm}
           \includegraphics[width=\linewidth]{img/desktop_2_CC_esm_dist_1.eps}
-          \caption{Translation error histogram, mean in red} 
+         \caption{Translation error histogram, with the mean marked as a red line}                
           \label{fig:desktop_2_CC_esm_dist_1}
   \end{subfigure}
   \caption{Results using CC \textit{Place Finder} and ESM  \textit{Real Pose Finder}}
@@ -113,7 +115,7 @@ The algorithm performs better with the mentioned ideal \textit{Place Finder}, so
 \subsubsection{Three-point \textit{Real Pose Finder}}
 \label{ssub:three_point_real_pose_finder}
 
-As an alternative to the method proposed by PTAM we applied the feature extraction and matching framework to find the transformation between two frames knowing the world frame location of the features. Tracking the world location of features is something that is no available on all VO implementations and it can be very useful to solve the described problem.\\
+As an alternative to the method proposed by PTAM, we applied the feature extraction and matching framework to find the transformation between two frames knowing the world frame location of the features. Tracking the world location of features is something that is no available on all VO implementations and it can be very useful to solve the described problem.\\
 
 \begin{figure}[htpb]
   \begin{subfigure}[b]{6cm}
@@ -124,13 +126,13 @@ As an alternative to the method proposed by PTAM we applied the feature extracti
   \qquad
   \begin{subfigure}[b]{6cm}
           \includegraphics[width=\linewidth]{img/desktop_2_naive_3pt_dist_1.eps}
-          \caption{Translation error histogram, mean in red} 
+          \caption{Translation error histogram, with the mean marked as a red line}                
           \label{fig:desktop_2_naive_3pt_dist_1}
   \end{subfigure}
-  \caption{Results using Naive \textit{Place Finder} and 3pt  \textit{Real Pose Finder}}
+  \caption{Results using Naive \textit{Place Finder} and P3P  \textit{Real Pose Finder}}
 \end{figure}
 
-In the case of the naive approach, in~\ref{fig:desktop_2_naive_3pt_dist_1}, the results are very good. Using this method the pose of the frames is recovered, in most cases, perfectly yelling a very low mean error. There is one frame which was not correctly relocalized, in that case not enough match were found between the pair of images. As seen in~\ref{fig:not_enough_matches} only two matches where found and , even correct, these are not enough to run the three-point algorithm. A large change in viewpoint can affect severely the descriptors performance been this the cause of the missing matches.\\
+In the case of the naive approach, in~\ref{fig:desktop_2_naive_3pt_dist_1}, the results are very good. Using this method the pose of the frames is recovered, in most cases, perfectly yielding a very low mean error. There is one frame which was not correctly relocalized, due to the lack of enough matches found between the pair of images. As seen in~\ref{fig:not_enough_matches} only two matches where found and, although correct, these are not enough to run the three-point algorithm. A large change in viewpoint can affect severely the descriptors performance been this the cause of the missing matches.\\
 
 \begin{figure}[htpb]
   \centering
@@ -150,7 +152,7 @@ On the other case~\ref{fig:desktop_2_CC_3pt_dist_1}, using CC, the results are a
   \qquad
   \begin{subfigure}[b]{6cm}
           \includegraphics[width=\linewidth]{img/desktop_2_CC_3pt_dist_1.png}
-          \caption{Translation error histogram, mean in red} 
+          \caption{Translation error histogram, with the mean marked as a red line}                
           \label{fig:desktop_2_CC_3pt_dist_1}
   \end{subfigure}
   \caption{Results using CC \textit{Place Finder} and 3pt  \textit{Real Pose Finder}}
@@ -169,7 +171,7 @@ On the other case~\ref{fig:desktop_2_CC_3pt_dist_1}, using CC, the results are a
 
 Finally, as an alternative to the PTAM relocalization method, it was proposed to use machine learning techniques, more concretely \textit{ferns}~\cite{Ozuysal2010}. As seen in~\ref{fig:desktop_2_ferns_dist_1} in this simple example it performs well having a very low mean error.\\
 
-When comparing the found path in~\ref{fig:desktop_2_ferns_path_1} with the found with the Multi relocalizer with three-point it seems that it is not as precise, but in this case all frames where well relocalized. The three-point \textit{Real Pose Finder} works very well locally yelling precise results when good matches are found, but it is very dependent on the results of the \textit{Place Finder}, on the other hand the \textit{ferns} relocalizer works globally. This makes it performs better in some cases but is a problem when scaling to larger environments.\\
+When comparing the found path in~\ref{fig:desktop_2_ferns_path_1} with the found with the Multi relocalizer with three-point it seems that it is not as precise, but in this case all frames where well relocalized. The three-point \textit{Real Pose Finder} works very well locally yielding precise results when good matches are found, but it is very dependent on the results of the \textit{Place Finder}. On the other hand the \textit{ferns} relocalizer works globally. As such, it performs better in some cases but cannot easily be used when scaling to larger environments, due to the amount of classes a larger environment would contain.\\
 
 In this example 237 classes are used (one per world point). It should be noticed that not all points need to be well classified, as long as more than 3 points are correctly identified then the posterior RANSAC will find and use the once that agree.\\
 
@@ -183,7 +185,7 @@ In this example 237 classes are used (one per world point). It should be noticed
   \qquad
   \begin{subfigure}[b]{6cm}
           \includegraphics[width=\linewidth]{img/desktop_2_ferns_60_12_dist_1.eps}
-          \caption{Translation error histogram, mean in red} 
+          \caption{Translation error histogram, with the mean marked as a red line}                
           \label{fig:desktop_2_ferns_dist_1}
   \end{subfigure}
   \caption{Results using \textit{ferns} with 12 tests}
@@ -193,12 +195,12 @@ In this example 237 classes are used (one per world point). It should be noticed
 \section{Large Dataset}
 \label{sec:large_dataset}
 
-As a second experiment a larger scenario has been closed. It is also desktop, but in this case, covering an area of 7x3 meters. The taken path to acquire training and testing data covering the mentioned area can be seen in~\ref{fig:large_desktop_train_test} while in Figure~\ref{fig:large_desktop_example_image} there is an example of the dataset images. The dataset contains 84 frames for training and 69 for testing.\\
+As a second experiment a larger scenario has been closed. It is also a desktop scene, but in this case, covering an area of 7x3 meters. The path taken to acquire training and testing data covering the mentioned area can be seen in~\ref{fig:large_desktop_train_test} while in Figure~\ref{fig:large_desktop_example_image} there is an example of the dataset images. The dataset contains 84 frames for training and 69 for testing.\\
 
 \begin{figure}[htpb]
   \begin{subfigure}[b]{6cm}
           \includegraphics[width=\linewidth]{img/large_desktop/test_train_path.eps}
-          \caption{In green, the path used for training. In blue, the path used for testing}                
+          \caption{In green, the path used for training. In blue, the path used for testing}
           \label{fig:large_desktop_train_test}
   \end{subfigure}   
   \qquad
@@ -216,7 +218,7 @@ As a second experiment a larger scenario has been closed. It is also desktop, bu
 \subsubsection{Naive and CC \textit{Place finder}}
 \label{ssub:naive_and_cc_place_finder_large}
 
-First of all, again, it performance of the \textit{Place Finder} is analysed to see then how posterior processes can improve it. In this case the Naive method gives a good baseline as was expected. On the other side, CC, have some good associations that seem to agree to Naive's with errors between 0.05 and 0.25, but it also has some wrong associations which probably cannot be corrected for example the one seen in~\ref{fig:large_CC_wrong_asociation}.\\
+Again, the performance of the \textit{Place Finder} is first analysed to see then how posterior processes can improve it. In this case the Naive method gives a good baseline as was expected. On the other side, the corss correlation method produces a number of good associations that seem to agree with the naive method with errors between 0.05 and 0.25. However, it also has some wrong associations which probably cannot be corrected, such as the example illustrated in figure~\ref{fig:large_CC_wrong_asociation}.\\
 
 \begin{figure}[htpb]
   \begin{subfigure}[b]{6cm}
@@ -245,7 +247,7 @@ First of all, again, it performance of the \textit{Place Finder} is analysed to 
 \subsubsection{Extended Second-order Minimization \textit{Real Pose Finder}}
 \label{ssub:extended_second_orther_minimization_real_pose_finder}
 
-In this case the produced path plot have also been avoided because they did not contribute with understandable visual information. Looking at the error distributions and comparing them to the performance from~\ref{fig:large_place_finder_dist} it seems that together with the Naive \textit{Place Finder} it worsen the results while with CC the results are similar, maybe slightly better. In general this method does not seem to apply well on this dataset. \\
+In this case the produced path plots are not shown due to its minimal visual information contribution. Looking at the error distributions and comparing them to the performance from~\ref{fig:large_place_finder_dist} it seems that together with the Naive \textit{Place Finder} it worsen the results while with CC the results are similar, maybe slightly better. In general this method does not seem to apply well on this dataset. \\
 
 \begin{figure}[htpb]
   \begin{subfigure}[b]{6cm}
@@ -266,7 +268,7 @@ In this case the produced path plot have also been avoided because they did not 
 \subsubsection{Three-point \textit{Real Pose Finder}}
 \label{ssub:large_three_point_real_pose_finder}
 
-On the other side, the Three-point \textit{Real Pose Finder} seems to work very well with this dataset. Using the Naive \textit{Place Finder} it is able to correctly find the pose of every frame. Using CC the results are also acceptable good correctly retrieving the pose of 42 of the 69 frames. As said before, and it can be seen again in this case, this method is very dependent on the results of the \textit{Place Finder} and on this dataset CC was not very effective.\\
+On the other side, the Three-point \textit{Real Pose Finder} seems to work very well with this dataset. Using the Naive \textit{Place Finder} it is able to correctly find the pose of every frame. Using CC the results are also acceptably good, correctly retrieving the pose of 42 of the 69 frames. As said before, and it can be seen again in this case, this method is very dependent on the results of the \textit{Place Finder}, and on this dataset, the cross correlation method was not very effective.\\
 
 \begin{figure}[htpb]
   \begin{subfigure}[b]{6cm}
@@ -277,10 +279,10 @@ On the other side, the Three-point \textit{Real Pose Finder} seems to work very 
   \qquad
   \begin{subfigure}[b]{6cm}
           \includegraphics[width=\linewidth]{img/large_desktop/naive_3pt_dist.eps}
-          \caption{Translation error histogram, mean in red} 
+          \caption{Translation error histogram, with the mean marked as a red line}                
           \label{fig:desktop_2_ferns_dist_1}
   \end{subfigure}
-  \caption{Results using Naive and 3pt on a larger dataset}
+  \caption{Results using Naive and P3P on a larger dataset}
 \end{figure}
 
 \begin{figure}[htpb]
@@ -292,19 +294,19 @@ On the other side, the Three-point \textit{Real Pose Finder} seems to work very 
   \qquad
   \begin{subfigure}[b]{6cm}
           \includegraphics[width=\linewidth]{img/large_desktop/CC_3pt_dist.eps}
-          \caption{Translation error histogram, mean in red} 
+          \caption{Translation error histogram, with the mean marked as a red line}                
           \label{fig:desktop_2_ferns_dist_1}
   \end{subfigure}
-  \caption{Results using CC and 3pt on a larger dataset}
+  \caption{Results using CC and P3P on a larger dataset}
 \end{figure}
 
 
 \subsection{Ferns}
 \label{sub:large_ferns}
 
-In~\cite{Ozuysal2010} it is said that \textit{fenrs} can be used to distinguish up to around 200 different classes. We applied the method to this dataset where there are 1730 classes. In~\ref{fig:large_desktop_ferns_dist} shows that almost 50 of the 69 frames where correctly relocalized. That is, more than using Multi Relocalizer with the three-point \textit{Real Pose Finder}. The classifier was trained with 100 \textit{ferns} of 12 tests each.\\
+In~\cite{Ozuysal2010} it is shown that \textit{ferns} can be used to distinguish up to around 200 different classes. We applied the method to this dataset where there are 1730 classes. In figure~\ref{fig:large_desktop_ferns_dist} it can be seen that almost 50 of the 69 frames where correctly relocalized. Which is more than using Multi Relocalizer with the three-point \textit{Real Pose Finder}. The classifier was trained with 100 \textit{ferns} of 12 tests each.\\
 
-It is interesting to see that both methods, three-point with CC and this one, can correctly relocalize the same number of frames. Probably there is one part of the dataset that is more ambiguous and difficult to recognize and both algorithms struggle with it (basically CC because it have been seen that three-point can correctly relocalize with the Naive \textit{Place Finder} which uses ground truth data).
+It is interesting to see that both methods, three-point with CC and this one, can correctly relocalize the same number of frames. Probably there is one part of the dataset that is more ambiguous and difficult to recognize and both algorithms struggle with it.\\
 
 \begin{figure}[htpb]
   \begin{subfigure}[b]{6cm}
@@ -315,10 +317,36 @@ It is interesting to see that both methods, three-point with CC and this one, ca
   \qquad
   \begin{subfigure}[b]{6cm}
           \includegraphics[width=\linewidth]{img/large_desktop/ferns_100_dist.eps}
-          \caption{Translation error histogram, mean in red} 
+          \caption{Translation error histogram, with the mean marked as a red line}                
           \label{fig:large_desktop_ferns_dist}
   \end{subfigure}
   \caption{Results using \textit{ferns} with 12 tests}
 \end{figure}
 
+\section{Execution time}
+\label{sec:execution_time}
 
+In figure~\ref{fig:exec_time} the mean execution time of relocalization is shown. There, it can be seen that the ESM and the P3P methods are the faster while the method using \textit{ferns} classifier is slower and is sensitive to the number of classes. Also, while ESM and P3P use optimized third party libraries, the \textit{ferns} based classifier has been integrally implemented by us, maybe not achieving the best performance. The used training time for the classifier can be seen in figure~\ref{fig:training_time}.\\
+
+\begin{figure}[htpb]
+  \centering
+  \begin{bchart}[steps={0.2,0.4,0.6,0.8,1},max=1]
+  \bcbar[label= CC and ESM]{0.0437}
+  \bcbar[label=CC and P3P]{0.0647}
+  \bcbar[label=ferns 237 classes]{0.128}
+  \bcbar[label=ferns 1730 classes]{0.933}
+  \end{bchart}
+  \caption{Single relocalization execution time}
+  \label{fig:exec_time}
+\end{figure}
+
+
+\begin{figure}[htpb]
+  \centering
+  \begin{bchart}[step=10, max=70]
+    \bcbar[label=\quad 237 classes]{5.57}
+    \bcbar[label=1730 classes]{63.11}
+  \end{bchart}
+  \caption{\textit{ferns} classifier training time}
+  \label{fig:training_time}
+\end{figure}

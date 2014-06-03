@@ -2,20 +2,20 @@
 \chapter{Design and Implementation}
 \label{cha:design_and_implementation}
 
-During the design and development of the  library one of the goals was for it to be totally independent and self-contained. The method was planed to be used together with SVO but it had to be independent from it. For this reason non of the classes and data structures defined in SVO has been used during the implementation, only third-party libraries openly available to everybody.\\
+During the design and development of the  library one of the goals was for it to be totally independent and self-contained. The method was planed to be used together with SVO but it had to be independent from it. For this reason none of the classes and data structures defined in SVO has been used during the implementation, only third-party libraries openly available.\\
 
 This definition leaded to have some redundant definitions because in the end, this method is using a subset of the data from SVO. For example, the class SVO::Frame and the class reloc::Frame are somehow similar.\\
 
-Different methods have been developed here, an interface has been created to be able to used one or an other dynamically at run time. The interface is the abstract class reloc::AbstractRelocalizer, a pointer of this class is initialized to point to the real relocalizer algorithm. It can be then used transparently with no knowledge of the implementation is.\\
+Different methods have been developed. An interface has been created to be able to use one or an other dynamically at run time. The interface is the abstract class reloc::AbstractRelocalizer, a pointer of this class is initialized to point to the real relocalizer algorithm. It can be then used then transparently, with no knowledge of which relocalizer implementation is actually being used during the rest of the execution.\\
 
 The interface has been created with the following important methods:
 
 \begin{itemize}
   \item \textit{addFrame}: This method is used to add a new frame used to relocalize, usually only keyframes are added to the relocalizer.
  
-  \item \textit{removeFrame}:  Sometimes, a frame should not be used any more, for instance, when the vehicle is sure it has moved to a different area.
+  \item \textit{removeFrame}:  Sometimes, a frame should not be used any more, such as, when the vehicle is sure it has moved to a different area.
 
-  \item \textit{train}: Some of the implemented methods need to train before it is able to relocalize. It should always be executed, but not all methods will do something.
+  \item \textit{train}: Some of the implemented methods need to train before they are able to relocalize. It should always be executed, but not all methods will do something.
 
   \item \textit{relocalize}: This is the actual method used when the vehicle is lost. Given one new image, it will try to find its current 6 DoF pose.
 \end{itemize}
@@ -76,15 +76,15 @@ A class have been created to contain all the information from a frame that might
 \section{Third-party libraries}
 \label{sec:third_party_libraries}
 
-Those libraries have been used and are third-party dependencies:
+The following libraries have been used as third-party dependencies:
 
 \begin{itemize}
-  \item \textbf{OpenCV}: Mostly for its image encapsulation. Also used in image warping and descriptor extraction
+  \item \textbf{OpenCV}\cite{opencv_library}: Mostly for its image encapsulation. Also used in image warping and descriptor extraction
 
-  \item \textbf{Eigen}: General matrix operations and linear algebra solutions
+  \item \textbf{Eigen}\cite{eigenweb}: General matrix operations and linear algebra solutions
 
-  \item \textbf{Sophus}: Lie algebra groups implementation using Eigen
+  \item \textbf{Sophus}\cite{sophus}: Lie algebra groups implementation using Eigen
 
-  \item \textbf{OpenGV}: Three point algorithm implementation using Eigen
+  \item \textbf{OpenGV}\cite{kneipopengv}: Three point algorithm implementation using Eigen
 \end{itemize}
 

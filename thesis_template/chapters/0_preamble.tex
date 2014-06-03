@@ -23,11 +23,13 @@
 % Abstract
 
 \chapter*{Abstract}
- \addcontentsline{toc}{chapter}{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
 
- Visual odometry techniques  are largely used on robotic vehicle and more specifically on MAVs (Micro Aerial Veicle). While being a very interesting solution this algorithm are known to get lost when track is lost due to blurred images or large frame to frame changes becoming the kidnapped robot problem. In the following work we are going to study and propose some relocalization solutions for Visual Odometry algorithms. This work is intended to work with SVO (Semi-direct Visual Odometry) but the proposed framework can be used with other methods. The relocalization method from PTAM is used as a base line and new alternatives based on space geometry and machine lairing are proposed.
+Visual odometry techniques are becoming increasingly popular in robotic vehicles as a means to provide navigation information. This is further relevant in the context of Micro Aerial Veihicles (MAVs) where the payload constrains impose strong limitations on the choice of navigation sensors.  
+Modern Visual Odometry algorithms, although quite sophisticated, are prone to failures when the tracking is lost due to image blur or sudden large changes in the image content.  
+The loss of the tracking requites finding the location of the vehicle with respect to a previously built map (kidnapped robot problem). In this work we study and propose some relocalization solutions for Visual Odometry algorithms. This work is intended to work with SVO (Semi-direct Visual Odometry) but the proposed framework can be used with other methods. The relocalization method from PTAM is used as a base line and new alternatives based on space geometry and machine learning are proposed.
 
- \cleardoublepage
+\cleardoublepage
 
 %---------------------------------------------------------------------------
 % Symbols
