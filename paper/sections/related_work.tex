@@ -1,0 +1,30 @@
+
+%! TEX root = paper.tex
+
+\section{Related Work}\label{sec:related_work}
+
+\subsection{Place Recognition}
+\label{ssub:place_recognition}
+
+
+Klein and Murray present in \cite{Klein2008improving} the relocalization method used in PTAM \cite{KleinMurray2007}. PTAM is a VO algorithm based on keyframes that are used during the relocalization. The relocalization method consists of two steps. First, given the current frame, the most similar keyframe is retrieved, and its know pose is used as a baseline. As a measure of similarity the cross correlation, being the difference between subsampled, blurred and zero-mean images is used. The small blurry images are stored every time there is a new keyframe and the small blurry image of a new frame is computed during the relocalization to be compared with the keyframes.\\
+
+Other methods can be used for image retrieval, for example using bag of words~\cite{Sivic2003}. Nist\'er and Stewenius \cite{Nister2006} propose to use a tree structure to store words in order to handle much larger vocabulary or have a much faster retrieval. Every node of the tree would have $k$ child nodes which are the clustering results of $k$-means. The tree is build by recursive $k$-means. This structure is expensive to build because $k$-means is very resource consuming. During the online process, new words can be appended to the final leaves.\\
+
+\"Ozuysal et al. \cite{Ozuysal2010} proposes a simplified random forest classifier which relates image patches to objects. It is simplified because instead of using a tree structure, they use a linear structure applying all the binary tests to the patch. The result of the tests is a binary descriptor, the list of binary tests is called Fern. Every object is trained with multiple random warps of the known view to introduce information from possible different views of the object. In the end every object can be represented with many binary descriptors and every descriptor should output a probability distribution of possible objects represented. Evaluating multiple Ferns and joining the produced distributions, the final classification is achieved.\\
+
+\subsection{Pose Estimation}
+\label{ssub:pose_estimation}
+
+Geometric methods are typically used to find the transformation from the found keyframe using the classic pipeline of salient points detection, feature extraction and matching. The five-point algorithm can then be used to find the scaled 6 DoF transformation or the full 6 DoF with the three-point algorithm if depth is known~\cite{hartley2003multiple}.
+
+During the second step of the relocalization, the transformation from the retrieved frame to the query frame must be calculated. This transformation will be finally appended to the know keyframe pose. In PTAM, an image alignment algorithm, Efficient Second-Order Minimization method (ESM) \cite{Benhimane2006}, is employed. ESM is a Gauss-Newton gradient descent algorithm, which can be used with different image warp functions. It is similar and based on the  Lucas-Kanade \cite{Baker2004} algorithm but using Second-order functions. Therefore, it results in a faster convergence.\\
+
+\subsection{Joint Place and Pose estimation}
+\label{ssub:joint_place_and_pose_estimaton}
+
+One approach to solve the relocalization problem was proposed by Williams \cite{Williams2007}. In their implementation, they use Random Forest classifiers to characterize a salient object in space. To do so, the classifier needs to be trained with as many as possible representations of the object (multiple views). Therefore, the first time an object is found, multiple warps of the patch are used to initialize its presence in the classifier. On later encounters with the object, the classifier is incrementally trained with additional data. During the relocalization phase salient points are classified using the trained classifier and the three-point algorithm is used to recover the 6 DoF position. This method is memory expensive and requires a GPU to generate the patch warps.\\
+
+Shotton et al. \cite{Shotton2013} also propose a method to solve the place recognition and pose estimation problem simultaneously using random forests. RGB-D data is used to train the classifier. In this case, all the information is encoded in the classifier so no previous data storing or computing (salient point detection, descriptor extraction, etc...) is needed. The classifier is trained to an individual RGB-D pixel, and an RGB-D pixel query will output a probability distribution over the position in $\mathbb{R}^3$. This can be applied to all pixels of a frame or to a sparse subset selection of them. Ideally, the camera pose can be inferred from only three pixels, but as the output of the classifier can be very noisy, a second step is applied. From the output from many pixels an energy function is minimized using preemptive RANSAC in order to find a pose that agrees with most of the distributions.\\
+
+To train this method, a very complete dataset of RGB-D images with 6 DoF poses from the environment associated to them is needed. That makes it difficult to be used with SLAM problems where the map get populated incrementally. An online training  method should be developed.\\

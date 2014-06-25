@@ -1,0 +1,58 @@
+\documentclass{beamer}
+\usepackage{beamerthemesplit}
+%\usepackage[config, font={small}]{caption,subfig}
+\usepackage[compatibility=false]{caption}
+\usepackage{subcaption}
+\usepackage{epsf,graphicx} %If you want to include postscript graphics
+\usepackage{pgfplots}
+\usepackage{bchart}
+
+\useoutertheme{infolines}
+\renewcommand{\thefigure}{\thechapter.\Alph{figure}} % set caption label style to 1.A
+\renewcommand{\thesubfigure}{\arabic{subfigure}}
+\graphicspath{{img/}}
+
+
+\title{Fast vision-based relocalization for MAVs}
+\author {Quim S\`{a}nchez}
+\date{June 13, 2014}
+\institute[UZ, UdG]{
+University of Zurich, Universitat de Girona\\
+}
+\begin{document}
+\frame{\titlepage}
+
+\begin{frame}
+  \frametitle{Table of Contents}
+  \tableofcontents
+\end{frame}
+
+\input{sections/introduction}
+
+%\AtBeginSection[]
+%{
+%  \frame<beamer>
+%  {
+%    \frametitle {Outline}
+%    \tableofcontents[current]
+%  }
+%}
+
+\AtBeginSubsection[]
+{
+  \frame<beamer>
+  {
+    \frametitle{Outline}
+    \tableofcontents[current,currentsubsection]
+  }
+}
+\input{sections/approach}
+\input{sections/results}
+\input{sections/conclusions}
+
+\begin{frame}[t]{Bibliography}
+  \bibliographystyle{abbrv}
+  \bibliography{../rpg_templates/thesis_template/bibtex/references}
+\end{frame}
+
+\end{document}

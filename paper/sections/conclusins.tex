@@ -1,0 +1,13 @@
+%! TEX root = paper.tex
+
+\section{Conclusions}
+\label{sec:conclusins}
+
+This work has addressed an important part was missing in SVO, a good relocalization method which should recover the 6 DoF pose from only a map and a new frame. Different methods have been studied and implemented. First, as a starting point, the method from PTAM has been implemented which is based on image alignment.\\
+
+Then, an alternative method based on the previous has been proposed. This method is based on space geometry and on the descriptor extraction and matching framework and uses the three-point algorithm to find the camera pose by relating some world points and pixel coordinates. This method produces very accurate results when matches are found between images and in general is a great improvement over the base line, being more robust and accurate.\\
+
+
+Finally a new approach is proposed. The central idea is to use machine learning techniques to characterise the appearance of some known points in space, to later be able to retrieve their position from the pixels of an image. \textit{Ferns} are very similar to Random Forests but simpler and easier to implement, while being able to encode the same of information. A classifier based on \textit{ferns} have been implemented and the same time as integrated in a relocalizer.\\
+
+This method has been found to give good results even in larger areas where more than 1700 classes need to be classified even though a simplified version of the training was used.\\
